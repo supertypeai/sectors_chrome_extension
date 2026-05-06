@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sectors IDX Lens — Settings</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="options.css" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
+</head>
+<body>
+  <div class="page-wrap">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img src="icons/android-chrome-192x192.png" class="brand-logo" alt="Sectors Logo" />
+        <div>
+          <div class="brand-name">Sectors</div>
+          <div class="brand-sub">IDX Ticker Lens</div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#api-key"   class="nav-item active" data-section="api-key">API Key</a>
+        <a href="#behaviour" class="nav-item" data-section="behaviour">Behaviour</a>
+        <a href="#about"     class="nav-item" data-section="about">About</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="https://docs.sectors.app/" target="_blank">API Docs</a>
+        <a href="https://sectors.app/" target="_blank">Sectors.app</a>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+
+      <!-- ── API Key ── -->
+      <section id="sec-api-key" class="section active">
+        <div class="section-header">
+          <h1 class="section-title">API Key</h1>
+          <p class="section-desc">Your Sectors API key is stored securely in Chrome's sync storage and never sent anywhere except <code>api.sectors.app</code>.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Sectors API Key</div>
+          <div class="input-row">
+            <input
+              type="password"
+              id="api-key-input"
+              class="text-input"
+              placeholder="Paste your API key here…"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button class="btn-toggle-vis" id="btn-toggle-vis" title="Show / hide key">Show</button>
+          </div>
+          <p class="hint">
+            Get your free API key at
+            <a href="https://sectors.app/api" target="_blank">sectors.app/api</a>.
+          </p>
+        </div>
+
+        <div class="card" id="test-card">
+          <div class="card-label">Test Connection</div>
+          <div class="test-row">
+            <input
+              type="text"
+              id="test-ticker"
+              class="text-input"
+              placeholder="Enter a ticker to test, e.g. BBCA"
+              maxlength="10"
+              style="text-transform:uppercase; letter-spacing:0.06em;"
+            />
+            <button class="btn-primary" id="btn-test">Test</button>
+          </div>
+          <div id="test-result" class="test-result hidden"></div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn-primary" id="btn-save">Save API Key</button>
+          <button class="btn-danger"  id="btn-clear">Clear Key</button>
+          <span id="save-msg" class="save-msg hidden"></span>
+        </div>
+      </section>
+
+      <!-- ── Behaviour ── -->
+      <section id="sec-behaviour" class="section">
+        <div class="section-header">
+          <h1 class="section-title">Behaviour</h1>
+          <p class="section-desc">Customise how the ticker tooltip behaves on pages.</p>
+        </div>
+
+        <div class="card">
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Enable hover tooltip</div>
+              <div class="toggle-desc">Show the ticker popup when hovering IDX symbols on any page.</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="pref-enabled" checked />
+              <span class="toggle-knob"></span>
+            </label>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Hover delay</div>
+              <div class="toggle-desc">Milliseconds to wait before fetching data after the mouse stops.</div>
+            </div>
+            <div class="slider-wrap">
+              <input type="range" id="pref-delay" min="50" max="600" step="50" value="120" />
+              <span id="delay-val" class="slider-val">120 ms</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn-primary" id="btn-save-prefs">Save Preferences</button>
+          <span id="prefs-msg" class="save-msg hidden"></span>
+        </div>
+      </section>
+
+      <!-- ── About ── -->
+      <section id="sec-about" class="section">
+        <div class="section-header">
+          <h1 class="section-title">About</h1>
+        </div>
+
+        <div class="card about-card">
+          <img src="icons/android-chrome-192x192.png" class="about-logo-img" alt="Sectors Logo" style="width: 64px; height: 64px; margin-bottom: 12px;" />
+          <div class="about-name">Sectors IDX Ticker Lens</div>
+          <div class="about-version">v1.0.0</div>
+          <p class="about-desc">
+            Hover any IDX ticker symbol on a webpage to instantly surface company data,
+            insider filings, and valuation metrics — powered by the
+            <a href="https://docs.sectors.app/" target="_blank">Sectors Financial API</a>.
+          </p>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Sectors API Endpoints</div>
+          <table class="endpoints-table">
+            <thead>
+              <tr><th>Endpoint</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>GET /v2/companies/</code></td><td>Natural language company screener</td></tr>
+              <tr><td><code>GET /v2/company/report/{symbol}/</code></td><td>IDX company price & valuation</td></tr>
+              <tr><td><code>GET /v2/klse/company/report/{symbol}/</code></td><td>KLSE company price & valuation</td></tr>
+              <tr><td><code>GET /v2/sgx/company/report/{symbol}/</code></td><td>SGX company price & valuation</td></tr>
+              <tr><td><code>GET /v2/company/get-segments/{symbol}/</code></td><td>Revenue segments breakdown</td></tr>
+              <tr><td><code>GET /v2/company/quarterly-financials/</code></td><td>Historical quarterly financials</td></tr>
+              <tr><td><code>GET /v2/sector/report/{sector}/</code></td><td>Sector performance & metrics</td></tr>
+              <tr><td><code>GET /v2/filings/</code></td><td>Insider transaction filings</td></tr>
+              <tr><td><code>GET /v2/news/</code></td><td>Unified news (IDX & Mining)</td></tr>
+              <tr><td><code>GET /v2/free-float/</code></td><td>Public free float analysis</td></tr>
+              <tr><td><code>GET /v2/ipo/listing-performance/</code></td><td>IPO performance tracking</td></tr>
+              <tr><td><code>GET /v2/transaction/daily/</code></td><td>Daily market transactions</td></tr>
+              <tr><td><code>GET /v2/ranking/most-traded/</code></td><td>Top traded company rankings</td></tr>
+              <tr><td><code>GET /v2/mining/companies/</code></td><td>Mining company directory</td></tr>
+              <tr><td><code>GET /v2/mining/sites/</code></td><td>Global mining site locations</td></tr>
+              <tr><td><code>GET /v2/global-commodity-data/</code></td><td>Worldwide commodity statistics</td></tr>
+              <tr><td><code>GET /v2/mining-license-auctions/</code></td><td>Mining rights & auctions</td></tr>
+              <tr><td><code>GET /v2/sales-destination/</code></td><td>Company sales by destination</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Links</div>
+          <div class="links-grid">
+            <a href="https://sectors.app/" target="_blank" class="link-chip">Sectors.app</a>
+            <a href="https://docs.sectors.app/" target="_blank" class="link-chip">API Docs</a>
+            <a href="https://sectors.app/api" target="_blank" class="link-chip">Sectors API</a>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <div id="tour-overlay" class="tour-overlay"></div>
+  <div id="tour-highlight" class="tour-highlight hidden"></div>
+  <div id="tour-tooltip" class="tour-tooltip hidden">
+    <h3 id="tour-title">Step Title</h3>
+    <p id="tour-text">Step description goes here.</p>
+    <div class="tour-btns">
+      <button id="btn-tour-skip" class="btn-tour btn-tour-skip">Skip</button>
+      <button id="btn-tour-next" class="btn-tour btn-tour-next">Next</button>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

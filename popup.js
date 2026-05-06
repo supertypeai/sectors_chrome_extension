@@ -1,0 +1,256 @@
+// popup.js
+const API_BASE = "https://api.sectors.app/v2";
+
+// ── DOM refs ──────────────────────────────────────────────────────────────
+const keyStatusEl   = document.getElementById("key-status");
+const keyOkEl       = document.getElementById("key-ok");
+const tickerInput   = document.getElementById("ticker-input");
+const btnSearch     = document.getElementById("btn-search");
+const btnSettings   = document.getElementById("btn-settings");
+const btnSetKey     = document.getElementById("btn-set-key");
+const resultArea    = document.getElementById("result-area");
+const resultContent = document.getElementById("result-content");
+
+// ── Init ──────────────────────────────────────────────────────────────────
+chrome.storage.sync.get(["sectorsApiKey"], ({ sectorsApiKey }) => {
+  if (sectorsApiKey) {
+    keyOkEl.classList.remove("hidden");
+    keyStatusEl.classList.add("hidden");
+  } else {
+    keyStatusEl.classList.remove("hidden");
+    keyOkEl.classList.add("hidden");
+
+    // Check for first-time opening
+    chrome.storage.local.get(["hasOpenedBefore"], ({ hasOpenedBefore }) => {
+      if (!hasOpenedBefore) {
+        chrome.storage.local.set({ hasOpenedBefore: true }, () => {
+          chrome.runtime.openOptionsPage();
+        });
+      }
+    });
+  }
+});
+
+// ── Navigation ────────────────────────────────────────────────────────────
+btnSettings.addEventListener("click", () => chrome.runtime.openOptionsPage());
+btnSetKey.addEventListener("click",   () => chrome.runtime.openOptionsPage());
+
+// ── Search ────────────────────────────────────────────────────────────────
+btnSearch.addEventListener("click", doSearch);
+tickerInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") doSearch();
+});
+
+async function doSearch() {
+  const raw    = tickerInput.value.trim().toUpperCase();
+  const symbol = raw.replace(/\.JK$/i, "");
+  if (!symbol || symbol.length < 2) return;
+
+  showLoading();
+
+  chrome.storage.sync.get(["sectorsApiKey"], async ({ sectorsApiKey }) => {
+    if (!sectorsApiKey) {
+      showError(
+        "",
+        "No API key set",
+        'Please add your API key in <a href="#" id="error-open-settings" class="error-link">Settings</a> to enable search.',
+        true
+      );
+      document.getElementById("error-open-settings")?.addEventListener("click", (e) => {
+        e.preventDefault();
+        chrome.runtime.openOptionsPage();
+      });
+      return;
+    }
+
+    try {
+      const [reportRes, filingsRes] = await Promise.allSettled([
+        fetchJson(`${API_BASE}/company/report/${symbol}/`, sectorsApiKey),
+        fetchJson(`${API_BASE}/filings/?symbol=${symbol}&limit=5`, sectorsApiKey),
+      ]);
+
+      // Check for ticker not found error
+      if (reportRes.status === "rejected" && reportRes.reason.message.toLowerCase().includes("does not exist")) {
+        showError("", "Ticker Not Found", `${symbol} does not exist as an IDX stock.`);
+        return;
+      }
+
+      const report  = reportRes.status  === "fulfilled" ? reportRes.value  : null;
+      const filings = filingsRes.status === "fulfilled" ? filingsRes.value : null;
+
+      renderResult({ symbol, report, filings });
+    } catch (err) {
+      if (err.message.includes("403")) {
+        showError(
+          "",
+          "API Limit Reached",
+          'Your API key is exhausted. Upgrade at <a href="https://sectors.app/api" target="_blank" class="error-link">sectors.app/api</a>',
+          true
+        );
+      } else if (err.message.includes("429")) {
+        showError(
+          "",
+          "Rate Limit Exceeded",
+          "You are making too many requests. Please slow down or consider upgrading.",
+          false
+        );
+      } else {
+        showError("", "Request failed", err.message);
+      }
+    }
+  });
+}
+
+// ── Render ────────────────────────────────────────────────────────────────
+function renderResult({ symbol, report, filings }) {
+  resultArea.classList.remove("hidden");
+
+  const r        = report;
+  const overview = r?.overview   || {};
+  const valuation= r?.valuation  || {};
+  const filingRows = filings?.results || [];
+
+  let html = "";
+
+  // ── Company card ──
+  if (r) {
+    const price  = overview.last_close_price != null
+      ? `IDR ${fmt(overview.last_close_price)}` : "—";
+    const chg    = overview.daily_close_change;
+    const chgStr = chg != null ? `${(chg * 100).toFixed(2)}%` : null;
+    const chgCls = chg >= 0 ? "positive" : "negative";
+    const mcap   = overview.market_cap ? `IDR ${fmtBig(overview.market_cap)}` : "—";
+
+    html += `
+      <div class="company-card">
+        <div class="company-name">${esc(overview.company_name || symbol)}</div>
+        <div class="tag-row">
+          ${overview.sector     ? `<span class="tag">${esc(overview.sector)}</span>` : ""}
+          ${overview.sub_sector ? `<span class="tag">${esc(overview.sub_sector)}</span>` : ""}
+          ${overview.listing_board ? `<span class="tag">${esc(overview.listing_board)}</span>` : ""}
+        </div>
+        <div class="price-row">
+          <span class="price-val">${price}</span>
+          ${chgStr ? `<span class="price-change ${chgCls}">${chg >= 0 ? "+" : ""}${chgStr}</span>` : ""}
+        </div>
+        <div class="kv-grid">
+          <div class="kv"><span class="kv-label">Mkt Cap</span><span class="kv-value">${mcap}</span></div>
+          <div class="kv"><span class="kv-label">P/E TTM</span><span class="kv-value">${valuation.pe_ttm != null ? valuation.pe_ttm.toFixed(2) : "—"}</span></div>
+          <div class="kv"><span class="kv-label">P/B MRQ</span><span class="kv-value">${valuation.pb_mrq != null ? valuation.pb_mrq.toFixed(2) : "—"}</span></div>
+          <div class="kv"><span class="kv-label">Div Yield</span><span class="kv-value">${overview.yield_ttm != null ? (overview.yield_ttm * 100).toFixed(2) + "%" : "—"}</span></div>
+          <div class="kv"><span class="kv-label">ROE TTM</span><span class="kv-value">${valuation.roe_ttm != null ? (valuation.roe_ttm * 100).toFixed(2) + "%" : "—"}</span></div>
+          <div class="kv"><span class="kv-label">Employees</span><span class="kv-value">${overview.employee_num != null ? fmt(overview.employee_num) : "—"}</span></div>
+        </div>
+      </div>`;
+  } else {
+    html += `
+      <div class="company-card">
+        <div class="company-name">${esc(symbol)}</div>
+        <p class="no-filings" style="margin-top:6px">Company report not available for this ticker.</p>
+      </div>`;
+  }
+
+  // ── Insider Filings ──
+  html += `<div class="filings-section"><div class="filings-title">Recent Insider Filings</div>`;
+  if (filingRows.length === 0) {
+    html += `<p class="no-filings">No recent filings found.</p>`;
+  } else {
+    filingRows.forEach((f) => {
+      const cls  = f.transaction_type === "buy" ? "tx-buy" : "tx-sell";
+      const icon = f.transaction_type === "buy" ? "▲" : "▼";
+      const date = f.timestamp ? f.timestamp.split("T")[0] : "—";
+      const val  = f.transaction_value ? `IDR ${fmtBig(f.transaction_value)}` : "—";
+      html += `
+        <div class="filing-card">
+          <div class="filing-top">
+            <span class="tx-badge ${cls}">${icon} ${(f.transaction_type || "").toUpperCase()}</span>
+            <span class="filing-date">${date}</span>
+          </div>
+          <div class="filing-holder">${esc(f.holder_name || "—")}</div>
+          <div class="filing-detail">
+            <span>${fmt(f.amount_transaction)} shares @ IDR ${fmt(f.price)}</span>
+            <span class="filing-val">${val}</span>
+          </div>
+        </div>`;
+    });
+  }
+  html += `</div>`;
+
+  // ── Footer ──
+  html += `
+    <div class="result-footer">
+      <a class="sectors-link"
+         href="https://sectors.app/idx/${symbol.toLowerCase()}"
+         target="_blank">
+        View full report on Sectors.app
+      </a>
+    </div>`;
+
+  resultContent.innerHTML = html;
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────
+function showLoading() {
+  resultArea.classList.remove("hidden");
+  resultContent.innerHTML = `
+    <div class="loading-wrap">
+      <div class="spinner"></div>
+      <span>Fetching data…</span>
+    </div>`;
+}
+
+function showError(icon, title, detail, isHtml = false) {
+  resultArea.classList.remove("hidden");
+  resultContent.innerHTML = `
+    <div class="error-wrap">
+      <div class="error-icon">${icon}</div>
+      <div class="error-msg">
+        <strong>${esc(title)}</strong><br/>
+        ${isHtml ? detail : esc(detail)}
+      </div>
+    </div>`;
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────
+async function fetchJson(url, apiKey) {
+  const res = await fetch(url, { headers: { Authorization: apiKey } });
+  if (!res.ok) {
+    let errorMsg = `HTTP ${res.status}`;
+    try {
+      const data = await res.json();
+      errorMsg = data.message || data.error || errorMsg;
+    } catch (e) {
+      // Fallback
+    }
+
+    if (res.status === 403) {
+      throw new Error("403: API key exhausted");
+    }
+    if (res.status === 429) {
+      throw new Error("429: Rate limit exceeded");
+    }
+    throw new Error(errorMsg);
+  }
+  return res.json();
+}
+
+function esc(s) {
+  return String(s || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function fmt(n) {
+  if (n == null) return "—";
+  return Number(n).toLocaleString();
+}
+
+function fmtBig(n) {
+  if (n == null) return "—";
+  if (n >= 1e12) return (n / 1e12).toFixed(2) + "T";
+  if (n >= 1e9)  return (n / 1e9).toFixed(2)  + "B";
+  if (n >= 1e6)  return (n / 1e6).toFixed(2)  + "M";
+  return Number(n).toLocaleString();
+}
