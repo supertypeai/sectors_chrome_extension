@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Sectors IDX Ticker Lens",
   "version": "1.0.0",
-  "description": "Hover over any IDX ticker to get real-time company data, insider filings, and news from Sectors.app",
+  "description": "Hover over any IDX ticker to get real-time company data and insider filings from Sectors.app",
   "permissions": [
     "storage",
     "activeTab"
