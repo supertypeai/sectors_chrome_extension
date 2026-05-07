@@ -24,7 +24,7 @@ Upon installation, the extension will automatically open the Settings page and l
 3. **Verify**: Test your connection immediately to unlock the lens.
 
 ### 3. Test it out
-Open the included [test_page.html](test_page.html) or visit any financial news site. Hover over a ticker like `BBCA` or `TLKM` to see the lens in action.
+Hover over a ticker like `BBCA` or `TLKM` to see the lens in action.
 
 ## Tech Stack
 - **Manifest V3**: Modern, secure Chrome Extension architecture.
@@ -41,4 +41,3 @@ Open the included [test_page.html](test_page.html) or visit any financial news s
 ## Privacy & Permissions
 - **`<all_urls>`**: Used only to detect ticker patterns. No browsing history is collected or stored.
 - **`storage`**: Securely syncs your API key and preferences across your Chrome profile.
-- **Privacy Policy**: A draft policy is included in `STORE_LISTING.md` for store submission.
