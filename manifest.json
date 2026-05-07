@@ -11,18 +11,18 @@
     "https://api.sectors.app/*"
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "scripts/background.js"
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
-      "css": ["tooltip.css"],
+      "js": ["scripts/content.js"],
+      "css": ["styles/tooltip.css"],
       "run_at": "document_idle"
     }
   ],
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "popup/popup.html",
     "default_icon": {
       "16": "icons/favicon-16x16.png",
       "32": "icons/favicon-32x32.png",
@@ -30,7 +30,7 @@
     }
   },
   "options_ui": {
-    "page": "options.html",
+    "page": "options/options.html",
     "open_in_tab": true
   },
   "icons": {
@@ -43,6 +43,7 @@
     {
       "resources": [
         "icons/android-chrome-192x192.png",
+        "icons/sectors_logo.png",
         "icons/favicon-32x32.png",
         "icons/favicon-16x16.png"
       ],
