@@ -1,12 +1,12 @@
 # Sectors IDX Ticker Lens
 
-A premium, production-ready Chrome extension that surfaces real-time financial data and insider trading filings when you hover over stock symbols on any webpage. 
+A premium, production-ready Chrome extension that surfaces real-time financial data and insider trading filings when you hover over IDX stock symbols on any webpage. 
 
 ## Features
 
 - **Interactive Onboarding**: A high-contrast, spotlight-driven 3-step walkthrough guides new users through API key setup and verification.
 - **Instant Hover Tooltips**: Hover over any ticker (e.g., `BBCA`, `TLKM`, `GOTO`) to see a premium glassmorphic popup with valuation metrics and price charts.
-- **Insider Filings**: Instant visibility into the 5 most recent insider transactions for any detected symbol.
+- **Insider Filings**: Instant visibility into the 5 most recent insider transactions for any detected IDX symbol.
 - **Performance Focused**: Efficient DOM node walking and debounce logic ensure zero lag on complex sites.
 - **Total Control**: Toggle hover detection on/off and adjust the hover delay (ms) via the settings dashboard.
 
