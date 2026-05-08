@@ -18,8 +18,8 @@ document.querySelectorAll(".nav-item").forEach((item) => {
 
 // ── Load saved values ─────────────────────────────────────────────────────
 chrome.storage.sync.get(
-  ["sectorsApiKey", "prefEnabled", "prefDelay", "hasCompletedTour"],
-  ({ sectorsApiKey, prefEnabled, prefDelay, hasCompletedTour }) => {
+  ["sectorsApiKey", "prefEnabled", "prefDelay", "prefTheme", "hasCompletedTour"],
+  ({ sectorsApiKey, prefEnabled, prefDelay, prefTheme, hasCompletedTour }) => {
     if (sectorsApiKey) {
       document.getElementById("api-key-input").value = sectorsApiKey;
     }
@@ -32,6 +32,14 @@ chrome.storage.sync.get(
     if (prefDelay !== undefined) {
       delaySlider.value  = prefDelay;
       delayVal.textContent = `${prefDelay} ms`;
+    }
+
+    const themeSelect = document.getElementById("pref-theme");
+    if (prefTheme) {
+      themeSelect.value = prefTheme;
+      applyTheme(prefTheme);
+    } else {
+      applyTheme("dark"); // Default to midnight
     }
 
     // Pre-populate test ticker
@@ -138,14 +146,27 @@ delaySlider.addEventListener("input", () => {
 });
 
 document.getElementById("btn-save-prefs").addEventListener("click", () => {
+  const theme = document.getElementById("pref-theme").value;
   const prefs = {
     prefEnabled: document.getElementById("pref-enabled").checked,
     prefDelay:   parseInt(delaySlider.value, 10),
+    prefTheme:   theme,
   };
   chrome.storage.sync.set(prefs, () => {
+    applyTheme(theme);
     showSaveMsg("prefs-msg", "Preferences saved!", true);
   });
 });
+
+function applyTheme(theme) {
+  if (theme === "light") {
+    document.documentElement.classList.add("light");
+  } else {
+    document.documentElement.classList.remove("light");
+  }
+  // Mirror to localStorage for synchronous head-script access (prevents flash)
+  localStorage.setItem("prefTheme", theme);
+}
 
 // ── Helper ────────────────────────────────────────────────────────────────
 function showSaveMsg(id, msg, ok) {

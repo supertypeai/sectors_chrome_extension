@@ -47,25 +47,43 @@ async function handleTickerFetch(symbol, sendResponse) {
       return;
     }
 
-    const cleanSymbol = symbol.replace(/\.jk$/i, "").toUpperCase();
+    // Determine if it's SGX or IDX
+    // const isSgx = symbol.toLowerCase().endsWith(".si"); 
+    const isSgx = false; // SGX disabled for now
+    const cleanSymbol = symbol.replace(/\.(jk|ij|id|si)$/i, "").toUpperCase();
 
-    const [reportRes, filingsRes] = await Promise.allSettled([
-      fetchJson(`${API_BASE}/company/report/${cleanSymbol}/`, apiKey),
-      fetchJson(`${API_BASE}/filings/?symbol=${cleanSymbol}&limit=5`, apiKey),
-    ]);
+    /* 
+    const reportUrl = isSgx
+      ? `${API_BASE}/sgx/company/report/${cleanSymbol}/`
+      : `${API_BASE}/company/report/${cleanSymbol}/`;
+    */
+    const reportUrl = `${API_BASE}/company/report/${cleanSymbol}/`;
 
-    // Check if report failed due to non-existent ticker
-    if (reportRes.status === "rejected" && reportRes.reason.message.toLowerCase().includes("does not exist")) {
-      sendResponse({ error: "ticker_not_found", symbol: cleanSymbol });
-      return;
+    const tasks = [fetchJson(reportUrl, apiKey)];
+    
+    // Skip filings for SGX
+    if (!isSgx) {
+      tasks.push(fetchJson(`${API_BASE}/filings/?symbol=${cleanSymbol}&limit=5`, apiKey));
     }
 
-    const report =
-      reportRes.status === "fulfilled" ? reportRes.value : null;
-    const filings =
-      filingsRes.status === "fulfilled" ? filingsRes.value : null;
+    const results = await Promise.allSettled(tasks);
+    const reportRes = results[0];
+    const filingsRes = !isSgx ? results[1] : { status: "fulfilled", value: { results: [] } };
 
-    sendResponse({ report, filings, symbol: cleanSymbol });
+    // Check if report failed
+    if (reportRes.status === "rejected") {
+      const msg = reportRes.reason.message.toLowerCase();
+      if (msg.includes("does not exist") || msg.includes("not found")) {
+        sendResponse({ error: "ticker_not_found", symbol: cleanSymbol, isSgx });
+        return;
+      }
+      throw new Error(reportRes.reason.message);
+    }
+
+    const report = reportRes.value;
+    const filings = filingsRes.status === "fulfilled" ? filingsRes.value : null;
+
+    sendResponse({ report, filings, symbol: cleanSymbol, isSgx });
   } catch (err) {
     sendResponse({ error: err.message });
   }

@@ -12,7 +12,13 @@ const resultArea    = document.getElementById("result-area");
 const resultContent = document.getElementById("result-content");
 
 // ── Init ──────────────────────────────────────────────────────────────────
-chrome.storage.sync.get(["sectorsApiKey"], ({ sectorsApiKey }) => {
+chrome.storage.sync.get(["sectorsApiKey", "prefTheme"], ({ sectorsApiKey, prefTheme }) => {
+  if (prefTheme) {
+    applyTheme(prefTheme);
+  } else {
+    applyTheme("dark"); // Default to midnight
+  }
+
   if (sectorsApiKey) {
     keyOkEl.classList.remove("hidden");
     keyStatusEl.classList.add("hidden");
@@ -31,6 +37,15 @@ chrome.storage.sync.get(["sectorsApiKey"], ({ sectorsApiKey }) => {
   }
 });
 
+function applyTheme(theme) {
+  if (theme === "light") {
+    document.documentElement.classList.add("light");
+  } else {
+    document.documentElement.classList.remove("light");
+  }
+  localStorage.setItem("prefTheme", theme);
+}
+
 // ── Navigation ────────────────────────────────────────────────────────────
 btnSettings.addEventListener("click", () => chrome.runtime.openOptionsPage());
 btnSetKey.addEventListener("click",   () => chrome.runtime.openOptionsPage());
@@ -42,8 +57,9 @@ tickerInput.addEventListener("keydown", (e) => {
 });
 
 async function doSearch() {
-  const raw    = tickerInput.value.trim().toUpperCase();
-  const symbol = raw.replace(/\.JK$/i, "");
+  const raw    = tickerInput.value.trim();
+  const isSgx  = raw.toLowerCase().endsWith(".si");
+  const symbol = raw.replace(/\.(jk|si)$/i, "").toUpperCase();
   if (!symbol || symbol.length < 2) return;
 
   showLoading();
@@ -64,21 +80,33 @@ async function doSearch() {
     }
 
     try {
-      const [reportRes, filingsRes] = await Promise.allSettled([
-        fetchJson(`${API_BASE}/company/report/${symbol}/`, sectorsApiKey),
-        fetchJson(`${API_BASE}/filings/?symbol=${symbol}&limit=5`, sectorsApiKey),
-      ]);
+      const reportUrl = isSgx
+        ? `${API_BASE}/sgx/company/report/${symbol}/`
+        : `${API_BASE}/company/report/${symbol}/`;
 
-      // Check for ticker not found error
-      if (reportRes.status === "rejected" && reportRes.reason.message.toLowerCase().includes("does not exist")) {
-        showError("", "Ticker Not Found", `${symbol} does not exist as an IDX stock.`);
-        return;
+      const tasks = [fetchJson(reportUrl, sectorsApiKey)];
+      if (!isSgx) {
+        tasks.push(fetchJson(`${API_BASE}/filings/?symbol=${symbol}&limit=5`, sectorsApiKey));
       }
 
-      const report  = reportRes.status  === "fulfilled" ? reportRes.value  : null;
+      const results = await Promise.allSettled(tasks);
+      const reportRes = results[0];
+      const filingsRes = !isSgx ? results[1] : { status: "fulfilled", value: { results: [] } };
+
+      // Check for ticker not found error
+      if (reportRes.status === "rejected") {
+        const msg = reportRes.reason.message.toLowerCase();
+        if (msg.includes("does not exist") || msg.includes("not found")) {
+          showError("", "Ticker Not Found", `${symbol} does not exist as an ${isSgx ? 'SGX' : 'IDX'} stock.`);
+          return;
+        }
+        throw new Error(reportRes.reason.message);
+      }
+
+      const report  = reportRes.value;
       const filings = filingsRes.status === "fulfilled" ? filingsRes.value : null;
 
-      renderResult({ symbol, report, filings });
+      renderResult({ symbol, report, filings, isSgx });
     } catch (err) {
       if (err.message.includes("403")) {
         showError(
@@ -102,7 +130,7 @@ async function doSearch() {
 }
 
 // ── Render ────────────────────────────────────────────────────────────────
-function renderResult({ symbol, report, filings }) {
+function renderResult({ symbol, report, filings, isSgx }) {
   resultArea.classList.remove("hidden");
 
   const r        = report;
@@ -150,37 +178,43 @@ function renderResult({ symbol, report, filings }) {
       </div>`;
   }
 
-  // ── Insider Filings ──
-  html += `<div class="filings-section"><div class="filings-title">Recent Insider Filings</div>`;
-  if (filingRows.length === 0) {
-    html += `<p class="no-filings">No recent filings found.</p>`;
-  } else {
-    filingRows.forEach((f) => {
-      const cls  = f.transaction_type === "buy" ? "tx-buy" : "tx-sell";
-      const icon = f.transaction_type === "buy" ? "▲" : "▼";
-      const date = f.timestamp ? f.timestamp.split("T")[0] : "—";
-      const val  = f.transaction_value ? `IDR ${fmtBig(f.transaction_value)}` : "—";
-      html += `
-        <div class="filing-card">
-          <div class="filing-top">
-            <span class="tx-badge ${cls}">${icon} ${(f.transaction_type || "").toUpperCase()}</span>
-            <span class="filing-date">${date}</span>
-          </div>
-          <div class="filing-holder">${esc(f.holder_name || "—")}</div>
-          <div class="filing-detail">
-            <span>${fmt(f.amount_transaction)} shares @ IDR ${fmt(f.price)}</span>
-            <span class="filing-val">${val}</span>
-          </div>
-        </div>`;
-    });
+  // ── Insider Filings (Skip for SGX) ──
+  if (!isSgx) {
+    html += `<div class="filings-section"><div class="filings-title">Recent Insider Filings</div>`;
+    if (filingRows.length === 0) {
+      html += `<p class="no-filings">No recent filings found.</p>`;
+    } else {
+      filingRows.forEach((f) => {
+        const cls  = f.transaction_type === "buy" ? "tx-buy" : "tx-sell";
+        const icon = f.transaction_type === "buy" ? "▲" : "▼";
+        const date = f.timestamp ? f.timestamp.split("T")[0] : "—";
+        const val  = f.transaction_value ? `IDR ${fmtBig(f.transaction_value)}` : "—";
+        html += `
+          <div class="filing-card">
+            <div class="filing-top">
+              <span class="tx-badge ${cls}">${icon} ${(f.transaction_type || "").toUpperCase()}</span>
+              <span class="filing-date">${date}</span>
+            </div>
+            <div class="filing-holder">${esc(f.holder_name || "—")}</div>
+            <div class="filing-detail">
+              <span>${fmt(f.amount_transaction)} shares @ IDR ${fmt(f.price)}</span>
+              <span class="filing-val">${val}</span>
+            </div>
+          </div>`;
+      });
+    }
+    html += `</div>`;
   }
-  html += `</div>`;
 
   // ── Footer ──
+  const sectorsUrl = isSgx
+    ? `https://sectors.app/sgx/${symbol.toLowerCase()}`
+    : `https://sectors.app/idx/${symbol.toLowerCase()}`;
+
   html += `
     <div class="result-footer">
       <a class="sectors-link"
-         href="https://sectors.app/idx/${symbol.toLowerCase()}"
+         href="${sectorsUrl}"
          target="_blank">
         View full report on Sectors.app
       </a>

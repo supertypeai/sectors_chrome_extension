@@ -3,9 +3,15 @@
 (function () {
   "use strict";
 
-  // IDX ticker pattern: 4 uppercase letters optionally followed by .JK (case-insensitive)
-  // IDX ticker pattern: 4-5 uppercase letters optionally followed by common suffixes (.JK, .IJ, .ID)
-  const TICKER_REGEX = /\b([A-Z]{4,5})(?:\.(?:JK|IJ|ID|jk|ij|id))?\b/g;
+  // Updated regex:
+  // 1. IDX tickers: 4 uppercase letters, optional suffix
+  // 2. SGX tickers: 1-4 alphanumeric, mandatory .SI suffix
+  // 3. Case-insensitive GoTo
+  // SGX Enabled Regex (for future use):
+  // const TICKER_REGEX = /\b(?:([A-Z]{4,5})(?:\.(?:JK|IJ|ID|jk|ij|id))?|([A-Z0-9]{1,4})\.(?:SI|si)|(GoTo|goto|GOTO))\b/g;
+  
+  // IDX Only Regex (Current):
+  const TICKER_REGEX = /\b(?:([A-Z]{4,5})(?:\.(?:JK|IJ|ID|jk|ij|id))?|(GoTo|goto|GOTO))\b/g;
 
   let tooltip = null;
   let hideTimeout = null;
@@ -20,11 +26,16 @@
   let hasApiKey = false;
   let hoverDelay = 120;
   let prefEnabled = true;
+  let prefTheme = "dark";
 
-  chrome.storage.sync.get(["sectorsApiKey", "prefDelay", "prefEnabled"], (res) => {
+  chrome.storage.sync.get(["sectorsApiKey", "prefDelay", "prefEnabled", "prefTheme"], (res) => {
     hasApiKey = !!res.sectorsApiKey;
     if (res.prefDelay) hoverDelay = res.prefDelay;
     if (res.prefEnabled !== undefined) prefEnabled = res.prefEnabled;
+    if (res.prefTheme) {
+      prefTheme = res.prefTheme;
+      if (tooltip) applyTheme(tooltip, prefTheme);
+    }
   });
 
   chrome.storage.onChanged.addListener((changes, area) => {
@@ -32,8 +43,20 @@
       if (changes.sectorsApiKey) hasApiKey = !!changes.sectorsApiKey.newValue;
       if (changes.prefDelay) hoverDelay = changes.prefDelay.newValue;
       if (changes.prefEnabled) prefEnabled = changes.prefEnabled.newValue;
+      if (changes.prefTheme) {
+        prefTheme = changes.prefTheme.newValue;
+        if (tooltip) applyTheme(tooltip, prefTheme);
+      }
     }
   });
+
+  function applyTheme(el, theme) {
+    if (theme === "light") {
+      el.classList.add("light");
+    } else {
+      el.classList.remove("light");
+    }
+  }
 
   function safeSendMessage(msg, cb) {
     if (!chrome.runtime?.id || isContextInvalid) return;
@@ -76,6 +99,7 @@
       </div>
     `;
     document.body.appendChild(el);
+    applyTheme(el, prefTheme);
 
     el.addEventListener("mouseenter", () => {
       isMouseOverTooltip = true;
@@ -195,7 +219,7 @@
         <div class="st-error">
           <div class="st-error-icon"></div>
           <p>Ticker not found.</p>
-          <p style="font-size:12px; margin-top:4px;">${escHtml(data.symbol)} does not exist on IDX.</p>
+          <p style="font-size:12px; margin-top:4px;">${escHtml(data.symbol)} does not exist on ${data.isSgx ? 'SGX' : 'IDX'}.</p>
         </div>`;
       return;
     }
@@ -231,52 +255,66 @@
 
     let html = "";
 
-    // ── AI Chat Summary Style (Top Card) ──
+    // ── Summary Card ──
     if (r && r.overview) {
       const overview = r.overview;
+      const exchange = data.isSgx ? "SGX" : "IDX";
+      const currency = data.isSgx ? "SGD" : "IDR";
+      // Try multiple possible price fields
+      const price = overview.last_close_price || overview.close_price || overview.price || null;
+      
       html += `
         <div class="st-section st-ai-chat-card">
           <div class="st-ai-header">
-            <span class="st-ai-label st-text-fancy">SECTORS SUMMARY</span>
+            <span class="st-ai-label st-text-fancy">QUICK SUMMARY</span>
           </div>
           <p class="st-ai-text">
-            is a <strong>${escHtml(overview.sector)}</strong> company listed on the ${escHtml(overview.listing_board)} Board. 
-            Currently trading at <strong>IDR ${formatNum(overview.last_close_price)}</strong> with a market cap of ${formatBig(overview.market_cap)}.
-            It operates in the ${escHtml(overview.sub_sector)} space with ${overview.employee_num ? formatNum(overview.employee_num) : 'many'} employees.
+            <strong>${escHtml(r.name || data.symbol)}</strong> is a <strong>${escHtml(overview.sector || overview.industry || '—')}</strong> company listed on ${exchange}. 
+            Currently trading at <strong>${currency} ${formatNum(price)}</strong> with a market cap of ${formatBig(overview.market_cap)}.
+            It operates in the ${escHtml(overview.sub_sector || '—')} space.
           </p>
         </div>`;
     }
 
-    // ── Company Details (New Layout) ──
+    // ── Company Details ──
     if (r) {
       const overview = r.overview || {};
-      const valuation = r.valuation || r || {}; // Fallback to root r if valuation is missing
+      const valuation = r.valuation || {};
+      const dividend = r.dividend || {};
       
-      // Improved Field mapping from Sectors API response
-      const selfPeer = r.peers?.[0]?.peers_data?.companies?.find(c => c.group?.includes("self"));
+      let pe = "—", pb = "—", dy = "—";
       
-      const pe = selfPeer?.pe_ttm || valuation.pe_ttm || r.pe_ttm || overview.pe_ttm || valuation.pe || r.pe || "—";
-      const pb = selfPeer?.pb_mrq || valuation.pb_mrq || r.pb_mrq || overview.pb_mrq || valuation.pb || r.pb || "—";
-      const dy = r.dividend?.yield_ttm || overview.yield_ttm || r.yield_ttm || valuation.yield_ttm || overview.dividend_yield || "—";
+      if (data.isSgx) {
+        pe = valuation.pe || "—";
+        pb = valuation.pb || "—";
+        dy = dividend.forward_dividend_yield || dividend.dividend_ttm || "—";
+      } else {
+        const selfPeer = r.peers?.[0]?.peers_data?.companies?.find(c => c.group?.includes("self"));
+        pe = selfPeer?.pe_ttm || valuation.pe_ttm || r.pe_ttm || overview.pe_ttm || valuation.pe || "—";
+        pb = selfPeer?.pb_mrq || valuation.pb_mrq || r.pb_mrq || overview.pb_mrq || valuation.pb || "—";
+        dy = r.dividend?.yield_ttm || overview.yield_ttm || r.yield_ttm || "—";
+      }
 
-      const price = overview.last_close_price
-        ? `IDR ${formatNum(overview.last_close_price)}`
+      const currency = data.isSgx ? "SGD" : "IDR";
+      const rawPrice = overview.last_close_price || overview.close_price || overview.price || null;
+      const price = rawPrice !== null
+        ? `${currency} ${formatNum(rawPrice)}`
         : "—";
-      const change = overview.daily_close_change != null
-        ? `${(overview.daily_close_change * 100).toFixed(2)}%`
-        : "0.00%";
-      const changeClass = overview.daily_close_change >= 0 ? "st-positive" : "st-negative";
+        
+      const dailyChange = data.isSgx ? (overview.change_1d || 0) : (overview.daily_close_change || 0);
+      const changeStr = `${(dailyChange * 100).toFixed(2)}%`;
+      const changeClass = dailyChange >= 0 ? "st-positive" : "st-negative";
       
       html += `
         <div class="st-section st-details">
-          <div class="st-company-name-large">${escHtml(overview.company_name || data.symbol)}</div>
+          <div class="st-company-name-large">${escHtml(r.name || overview.company_name || data.symbol)}</div>
           <div class="st-meta-row">
             <span class="st-tag">${escHtml(overview.sector || "")}</span>
             <span class="st-tag">${escHtml(overview.sub_sector || "")}</span>
           </div>
           <div class="st-price-row-large">
             <span class="st-price-val">${price}</span>
-            <span class="st-price-change ${changeClass}">${change}</span>
+            <span class="st-price-change ${changeClass}">${changeStr}</span>
           </div>
           <div class="st-metric-grid">
             <div class="st-metric">
@@ -284,11 +322,11 @@
               <span class="st-metric-v">${overview.market_cap ? formatBig(overview.market_cap) : '—'}</span>
             </div>
             <div class="st-metric">
-              <span class="st-metric-k">P/E (TTM)</span>
+              <span class="st-metric-k">P/E ${data.isSgx ? '' : '(TTM)'}</span>
               <span class="st-metric-v">${pe !== "—" ? Number(pe).toFixed(2) : "—"}</span>
             </div>
             <div class="st-metric">
-              <span class="st-metric-k">P/B (MRQ)</span>
+              <span class="st-metric-k">P/B ${data.isSgx ? '' : '(MRQ)'}</span>
               <span class="st-metric-v">${pb !== "—" ? Number(pb).toFixed(2) : "—"}</span>
             </div>
             <div class="st-metric">
@@ -301,57 +339,79 @@
       html += `<div class="st-section st-details"><div class="st-company-name-large">${escHtml(data.symbol)}</div><p class="st-dim">Company report unavailable</p></div>`;
     }
 
-    // ── Insider Filings ──
-    html += `<div class="st-section"><div class="st-section-title">Recent Insider Filings</div>`;
-    if (filings.length === 0) {
-      html += `<p class="st-dim">No recent filings</p>`;
-    } else {
-      filings.forEach((f) => {
-        const txClass = f.transaction_type === "buy" ? "st-buy" : "st-sell";
-        const txIcon = f.transaction_type === "buy" ? "▲" : "▼";
-        const val = f.transaction_value ? `IDR ${formatBig(f.transaction_value)}` : "—";
-        const date = f.timestamp ? f.timestamp.split("T")[0] : "—";
-        html += `
-          <div class="st-filing">
-            <div class="st-filing-top">
-              <span class="st-tx-badge ${txClass}">${txIcon} ${f.transaction_type?.toUpperCase()}</span>
-              <span class="st-filing-date">${date}</span>
-            </div>
-            <div class="st-filing-holder">${escHtml(f.holder_name || "—")}</div>
-            <div class="st-filing-detail">
-              <span>${formatNum(f.amount_transaction)} shares @ IDR ${formatNum(f.price)}</span>
-              <span class="st-filing-val">${val}</span>
-            </div>
-          </div>`;
-      });
+    // ── Insider Filings (Skip for SGX) ──
+    if (!data.isSgx) {
+      html += `<div class="st-section"><div class="st-section-title">Recent Insider Filings</div>`;
+      if (filings.length === 0) {
+        html += `<p class="st-dim">No recent filings</p>`;
+      } else {
+        filings.forEach((f) => {
+          const txClass = f.transaction_type === "buy" ? "st-buy" : "st-sell";
+          const txIcon = f.transaction_type === "buy" ? "▲" : "▼";
+          const val = f.transaction_value ? `IDR ${formatBig(f.transaction_value)}` : "—";
+          const date = f.timestamp ? f.timestamp.split("T")[0] : "—";
+          html += `
+            <div class="st-filing">
+              <div class="st-filing-top">
+                <span class="st-tx-badge ${txClass}">${txIcon} ${f.transaction_type?.toUpperCase()}</span>
+                <span class="st-filing-date">${date}</span>
+              </div>
+              <div class="st-filing-holder">${escHtml(f.holder_name || "—")}</div>
+              <div class="st-filing-detail">
+                <span>${formatNum(f.amount_transaction)} shares @ IDR ${formatNum(f.price)}</span>
+                <span class="st-filing-val">${val}</span>
+              </div>
+            </div>`;
+        });
+      }
+      html += `</div>`;
     }
-    html += `</div>`;
 
-    // ── AI Chat Area ──
-    html += `
-      <div class="st-section st-chat-box">
-        <div id="st-chat-output" class="st-chat-history"></div>
-        <div class="st-suggestions" id="st-suggestions">
-          <button class="st-suggest-btn" data-q="show me companies in the ${escHtml(r.overview?.sector || 'same')} sector with market_cap > ${r.overview?.market_cap || 0}">Sector Leaders</button>
-          <button class="st-suggest-btn" data-q="show me companies in the ${escHtml(r.overview?.sector || 'same')} sector with pe_ttm < 15">Value Peers (P/E < 15)</button>
-          <button class="st-suggest-btn" data-q="show me companies with revenue > 100000000000 in 2025 q2">High Revenue Peers</button>
-          <button class="st-suggest-btn" data-q="list top dividend payers in the ${escHtml(r.overview?.sub_sector || 'same sector')}">Top Div Payers</button>
-        </div>
-        <div class="st-chat-input-wrap">
-          <input type="text" id="st-ai-query" placeholder="Ask Screener about competitors of ${data.symbol}..." />
-          <button id="st-btn-ask" title="Send Query">➔</button>
-        </div>
-        <p class="st-chat-hint">Sectors Company Screener API</p>
-      </div>`;
+    // ── AI Chat Area (IDX Only) ──
+    if (!data.isSgx) {
+      html += `
+        <div class="st-section st-chat-box">
+          <div id="st-chat-output" class="st-chat-history"></div>
+          <div class="st-suggestions" id="st-suggestions">
+            <button class="st-suggest-btn" data-q="show me companies in the ${escHtml(r.overview?.sector || 'same')} sector with market_cap > ${r.overview?.market_cap || 0}">Sector Leaders</button>
+            <button class="st-suggest-btn" data-q="show me companies in the ${escHtml(r.overview?.sector || 'same')} sector with pe_ttm < 15">Value Peers (P/E < 15)</button>
+            <button class="st-suggest-btn" data-q="show me companies with revenue > 100000000000 in 2025 q2">High Revenue Peers</button>
+            <button class="st-suggest-btn" data-q="list top dividend payers in the ${escHtml(r.overview?.sub_sector || 'same sector')}">Top Div Payers</button>
+          </div>
+          <div class="st-chat-input-wrap">
+            <input type="text" id="st-ai-query" placeholder="Ask Screener about competitors of ${data.symbol}..." />
+            <button id="st-btn-ask" title="Send Query">➔</button>
+          </div>
+          <p class="st-chat-hint">Sectors Company Screener API</p>
+        </div>`;
+    } else {
+      html += `
+        <div class="st-section st-sgx-notice" style="background: hsla(var(--primary), 0.05); border-radius: 8px; padding: 12px; border: 1px dashed hsla(var(--primary), 0.3); margin-top: 8px;">
+          <p class="st-ai-text" style="font-size: 11px; line-height: 1.5; color: hsl(var(--muted-foreground));">
+            <span style="display: block; font-weight: 800; color: hsl(var(--spectral2)); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em;">SGX Roadmap</span>
+            Advanced AI metrics and natural language screener for SGX coming soon. 
+            Visit <strong>Sectors AI</strong> for deeper analysis.
+          </p>
+        </div>`;
+    }
 
     // ── Footer link ──
+    const symbolSlug = data.symbol.split('.')[0].toLowerCase();
+    const sectorsUrl = data.isSgx 
+      ? `https://sectors.app/sgx/${symbolSlug}`
+      : `https://sectors.app/idx/${symbolSlug}`;
+    
+    const aiChatUrl = data.isSgx
+      ? `https://sectors.app/chat?symbol=${symbolSlug}&exchange=SGX`
+      : `https://sectors.app/chat?symbol=${symbolSlug}`;
+
     html += `
       <div class="st-footer">
-        <a href="https://sectors.app/idx/${data.symbol.toLowerCase()}" target="_blank" class="st-ext-link">
+        <a href="${sectorsUrl}" target="_blank" class="st-ext-link">
           Open in Sectors.app
         </a>
-        <a href="https://sectors.app/chat" target="_blank" class="st-ext-link st-chat-link">
-          AI Chat
+        <a href="${aiChatUrl}" target="_blank" class="st-ext-link st-chat-link">
+          Sectors AI Chat
         </a>
       </div>`;
 
@@ -507,7 +567,8 @@
               y >= rect.top &&
               y <= rect.bottom
             ) {
-              return match[1]; // return just the 4-letter symbol
+              // Return the full matched string so suffixes like .SI are preserved
+              return match[0].toUpperCase();
             }
           }
         } catch (err) {
@@ -609,7 +670,7 @@
   }
 
   function formatNum(n) {
-    if (n == null) return "—";
+    if (n == null || isNaN(n)) return "—";
     return Number(n).toLocaleString();
   }
 

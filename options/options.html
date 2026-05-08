@@ -7,10 +7,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles/vars.css" />
   <link rel="stylesheet" href="options.css" />
   <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="../icons/favicon-16x16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="../icons/apple-touch-icon.png" />
+  <script src="../scripts/theme-check.js"></script>
 </head>
 <body>
   <div class="page-wrap">
@@ -104,6 +106,19 @@
               <input type="checkbox" id="pref-enabled" checked />
               <span class="toggle-knob"></span>
             </label>
+          </div>
+
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Theme</div>
+              <div class="toggle-desc">Switch between Sectors Light and Midnight Dark modes.</div>
+            </div>
+            <div class="theme-switch-wrap">
+              <select id="pref-theme" class="text-input" style="width: 120px;">
+                <option value="dark">Midnight</option>
+                <option value="light">Light</option>
+              </select>
+            </div>
           </div>
 
           <div class="divider"></div>
