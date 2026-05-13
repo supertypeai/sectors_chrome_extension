@@ -93,11 +93,11 @@
   background: transparent;
 }
 #sectors-tooltip::-webkit-scrollbar-thumb {
-  background: hsla(var(--st-muted-fg), 0.2);
+  background: hsla(var(--st-muted-fg), 0.25);
   border-radius: 10px;
 }
 #sectors-tooltip::-webkit-scrollbar-thumb:hover {
-  background: hsla(var(--st-muted-fg), 0.4);
+  background: hsla(var(--st-muted-fg), 0.45);
 }
 
 #sectors-tooltip.st-visible {
@@ -197,7 +197,7 @@
   font-weight: 800;
   color: hsl(var(--st-fg));
   margin-bottom: 4px;
-  padding-left: 12px; /* Align with card content */
+  padding-left: 4px; /* Align with card content */
   letter-spacing: -0.02em;
   line-height: 1.1;
 }
@@ -206,7 +206,7 @@
   display: flex;
   gap: 6px;
   margin-bottom: 14px;
-  padding-left: 12px; /* Align with card content */
+  padding-left: 4px; /* Reduced bumper */
   flex-wrap: wrap;
 }
 
@@ -232,10 +232,10 @@
 
 /* L3 — price value */
 #sectors-tooltip .st-price-val {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 800;
   color: hsl(var(--st-fg));
-  padding-left: 12px; /* Align with card content */
+  padding-left: 4px; /* Reduced bumper */
   letter-spacing: -0.04em;
 }
 
@@ -379,6 +379,7 @@
   gap: 10px;
   margin-bottom: 12px;
   scrollbar-width: thin;
+  scrollbar-color: hsla(var(--st-muted-fg), 0.25) transparent;
 }
 
 #sectors-tooltip .st-chat-history::-webkit-scrollbar {
@@ -388,8 +389,11 @@
   background: transparent;
 }
 #sectors-tooltip .st-chat-history::-webkit-scrollbar-thumb {
-  background: hsla(var(--st-muted-fg), 0.2);
+  background: hsla(var(--st-muted-fg), 0.25);
   border-radius: 10px;
+}
+#sectors-tooltip .st-chat-history::-webkit-scrollbar-thumb:hover {
+  background: hsla(var(--st-muted-fg), 0.45);
 }
 
 /* L2 — chat bubbles */

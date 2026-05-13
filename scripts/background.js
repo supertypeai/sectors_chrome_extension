@@ -48,27 +48,25 @@ async function handleTickerFetch(symbol, sendResponse) {
     }
 
     // Determine if it's SGX or IDX
-    // const isSgx = symbol.toLowerCase().endsWith(".si"); 
-    const isSgx = false; // SGX disabled for now
+    const isSgx = symbol.toLowerCase().endsWith(".si"); 
     const cleanSymbol = symbol.replace(/\.(jk|ij|id|si)$/i, "").toUpperCase();
 
-    /* 
     const reportUrl = isSgx
       ? `${API_BASE}/sgx/company/report/${cleanSymbol}/`
       : `${API_BASE}/company/report/${cleanSymbol}/`;
-    */
-    const reportUrl = `${API_BASE}/company/report/${cleanSymbol}/`;
 
-    const tasks = [fetchJson(reportUrl, apiKey)];
-    
-    // Skip filings for SGX
-    if (!isSgx) {
-      tasks.push(fetchJson(`${API_BASE}/filings/?symbol=${cleanSymbol}&limit=5`, apiKey));
-    }
+    const filingsUrl = isSgx
+      ? `${API_BASE}/singapore/sgx-filings/?symbol=${cleanSymbol}&limit=5`
+      : `${API_BASE}/filings/?symbol=${cleanSymbol}&limit=5`;
+
+    const tasks = [
+      fetchJson(reportUrl, apiKey),
+      fetchJson(filingsUrl, apiKey)
+    ];
 
     const results = await Promise.allSettled(tasks);
     const reportRes = results[0];
-    const filingsRes = !isSgx ? results[1] : { status: "fulfilled", value: { results: [] } };
+    const filingsRes = results[1];
 
     // Check if report failed
     if (reportRes.status === "rejected") {

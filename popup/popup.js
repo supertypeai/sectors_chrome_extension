@@ -59,7 +59,7 @@ tickerInput.addEventListener("keydown", (e) => {
 async function doSearch() {
   const raw    = tickerInput.value.trim();
   const isSgx  = raw.toLowerCase().endsWith(".si");
-  const symbol = raw.replace(/\.(jk|si)$/i, "").toUpperCase();
+  const symbol = raw.replace(/\.(jk|ij|id|si)$/i, "").toUpperCase();
   if (!symbol || symbol.length < 2) return;
 
   showLoading();
@@ -84,14 +84,14 @@ async function doSearch() {
         ? `${API_BASE}/sgx/company/report/${symbol}/`
         : `${API_BASE}/company/report/${symbol}/`;
 
-      const tasks = [fetchJson(reportUrl, sectorsApiKey)];
-      if (!isSgx) {
-        tasks.push(fetchJson(`${API_BASE}/filings/?symbol=${symbol}&limit=5`, sectorsApiKey));
-      }
+      // Filings are IDX-only
+      const tasks = isSgx
+        ? [fetchJson(reportUrl, sectorsApiKey)]
+        : [fetchJson(reportUrl, sectorsApiKey), fetchJson(`${API_BASE}/filings/?symbol=${symbol}&limit=5`, sectorsApiKey)];
 
       const results = await Promise.allSettled(tasks);
       const reportRes = results[0];
-      const filingsRes = !isSgx ? results[1] : { status: "fulfilled", value: { results: [] } };
+      const filingsRes = isSgx ? null : results[1];
 
       // Check for ticker not found error
       if (reportRes.status === "rejected") {
@@ -104,7 +104,7 @@ async function doSearch() {
       }
 
       const report  = reportRes.value;
-      const filings = filingsRes.status === "fulfilled" ? filingsRes.value : null;
+      const filings = filingsRes && filingsRes.status === "fulfilled" ? filingsRes.value : null;
 
       renderResult({ symbol, report, filings, isSgx });
     } catch (err) {
@@ -142,12 +142,13 @@ function renderResult({ symbol, report, filings, isSgx }) {
 
   // ── Company card ──
   if (r) {
+    const currency = isSgx ? "SGD" : "IDR";
     const price  = overview.last_close_price != null
-      ? `IDR ${fmt(overview.last_close_price)}` : "—";
-    const chg    = overview.daily_close_change;
+      ? `${currency} ${fmt(overview.last_close_price)}` : "—";
+    const chg    = isSgx ? (overview.change_1d || 0) : (overview.daily_close_change || 0);
     const chgStr = chg != null ? `${(chg * 100).toFixed(2)}%` : null;
     const chgCls = chg >= 0 ? "positive" : "negative";
-    const mcap   = overview.market_cap ? `IDR ${fmtBig(overview.market_cap)}` : "—";
+    const mcap   = overview.market_cap ? `${currency} ${fmtBig(overview.market_cap)}` : "—";
 
     html += `
       <div class="company-card">
@@ -178,17 +179,18 @@ function renderResult({ symbol, report, filings, isSgx }) {
       </div>`;
   }
 
-  // ── Insider Filings (Skip for SGX) ──
+  // ── Insider Filings (IDX only) ──
+  const currency = isSgx ? "SGD" : "IDR";
   if (!isSgx) {
-    html += `<div class="filings-section"><div class="filings-title">Recent Insider Filings</div>`;
+    html += `<div class="filings-section"><div class="filings-title">RECENT INSIDER FILINGS</div>`;
     if (filingRows.length === 0) {
-      html += `<p class="no-filings">No recent filings found.</p>`;
+      html += `<p class="no-filings"><em>No recent filings</em></p>`;
     } else {
       filingRows.forEach((f) => {
         const cls  = f.transaction_type === "buy" ? "tx-buy" : "tx-sell";
         const icon = f.transaction_type === "buy" ? "▲" : "▼";
         const date = f.timestamp ? f.timestamp.split("T")[0] : "—";
-        const val  = f.transaction_value ? `IDR ${fmtBig(f.transaction_value)}` : "—";
+        const val  = f.transaction_value ? `${currency} ${fmtBig(f.transaction_value)}` : "—";
         html += `
           <div class="filing-card">
             <div class="filing-top">
@@ -197,7 +199,7 @@ function renderResult({ symbol, report, filings, isSgx }) {
             </div>
             <div class="filing-holder">${esc(f.holder_name || "—")}</div>
             <div class="filing-detail">
-              <span>${fmt(f.amount_transaction)} shares @ IDR ${fmt(f.price)}</span>
+              <span>${fmt(f.amount_transaction)} shares @ ${currency} ${fmt(f.price)}</span>
               <span class="filing-val">${val}</span>
             </div>
           </div>`;
@@ -216,7 +218,7 @@ function renderResult({ symbol, report, filings, isSgx }) {
       <a class="sectors-link"
          href="${sectorsUrl}"
          target="_blank">
-        View full report on Sectors.app
+        View full report on sectors.app
       </a>
     </div>`;
 

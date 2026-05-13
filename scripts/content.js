@@ -8,7 +8,7 @@
   // 2. SGX tickers: 1-4 alphanumeric, mandatory .SI suffix
   // 3. Case-insensitive GoTo
   // SGX Enabled Regex (for future use):
-  const TICKER_REGEX = /\b(?:([A-Z]{4,5})(?:\.(?:JK|IJ|ID|jk|ij|id))?|([A-Z0-9]{1,4})\.(?:SI|si)|(GoTo|goto|GOTO))\b/g;
+  const TICKER_REGEX = /\b(?:([A-Z0-9]{1,4})\.(?:SI|si)|([A-Z]{4,5})(?:\.(?:JK|IJ|ID|jk|ij|id))?|(GoTo|goto|GOTO))\b/gi;
 
   let tooltip = null;
   let hideTimeout = null;
@@ -314,7 +314,7 @@
           <div class="st-metric-grid">
             <div class="st-metric">
               <span class="st-metric-k">MKT CAP</span>
-              <span class="st-metric-v">${overview.market_cap ? formatBig(overview.market_cap) : '—'}</span>
+              <span class="st-metric-v">${overview.market_cap ? currency + ' ' + formatBig(overview.market_cap) : '—'}</span>
             </div>
             <div class="st-metric">
               <span class="st-metric-k">P/E ${data.isSgx ? '' : '(TTM)'}</span>
@@ -334,7 +334,8 @@
       html += `<div class="st-section st-details"><div class="st-company-name-large">${escHtml(data.symbol)}</div><p class="st-dim">Company report unavailable</p></div>`;
     }
 
-    // ── Insider Filings (Skip for SGX) ──
+    // ── Insider Filings (IDX only) ──
+    const currency = data.isSgx ? "SGD" : "IDR";
     if (!data.isSgx) {
       html += `<div class="st-section"><div class="st-section-title">RECENT INSIDER FILINGS</div>`;
       if (filings.length === 0) {
@@ -343,7 +344,7 @@
         filings.forEach((f) => {
           const txClass = f.transaction_type === "buy" ? "st-buy" : "st-sell";
           const txIcon = f.transaction_type === "buy" ? "▲" : "▼";
-          const val = f.transaction_value ? `IDR ${formatBig(f.transaction_value)}` : "—";
+          const val = f.transaction_value ? `${currency} ${formatBig(f.transaction_value)}` : "—";
           const date = f.timestamp ? f.timestamp.split("T")[0] : "—";
           html += `
             <div class="st-filing">
@@ -353,7 +354,7 @@
               </div>
               <div class="st-filing-holder">${escHtml(f.holder_name || "—")}</div>
               <div class="st-filing-detail">
-                <span>${formatNum(f.amount_transaction)} shares @ IDR ${formatNum(f.price)}</span>
+                <span>${formatNum(f.amount_transaction)} shares @ ${currency} ${formatNum(f.price)}</span>
                 <span class="st-filing-val">${val}</span>
               </div>
             </div>`;
@@ -379,12 +380,6 @@
           </div>
           <p class="st-chat-hint">Sectors Company Screener API — natural language search</p>
         </div>`;
-    } else {
-      html += `
-        <div class="st-section st-sgx-notice">
-          <span class="st-ai-label">SGX roadmap</span>
-          <p class="st-ai-text">Advanced AI metrics and natural language screener for SGX coming soon. Visit <strong>Sectors AI</strong> for deeper analysis.</p>
-        </div>`;
     }
 
     // ── Footer link ──
@@ -399,7 +394,7 @@
 
     html += `
       <div class="st-footer">
-        <a href="${sectorsUrl}" target="_blank" class="st-ext-link">Open in Sectors.app</a>
+        <a href="${sectorsUrl}" target="_blank" class="st-ext-link">Open in sectors.app</a>
         <a href="${aiChatUrl}" target="_blank" class="st-ext-link st-chat-link">Sectors AI Chat</a>
       </div>`;
 

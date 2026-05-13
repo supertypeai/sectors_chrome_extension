@@ -114,7 +114,9 @@ body {
   scrollbar-width: thin; scrollbar-color: hsla(var(--primary), 0.3) transparent;
 }
 .result-area::-webkit-scrollbar { width: 4px; }
+.result-area::-webkit-scrollbar-track { background: transparent; }
 .result-area::-webkit-scrollbar-thumb { background: hsla(var(--primary), 0.4); border-radius: 99px; }
+.result-area::-webkit-scrollbar-thumb:hover { background: hsla(var(--primary), 0.65); }
 
 /* ── Loading ── */
 .loading-wrap {
