@@ -8,10 +8,7 @@
   // 2. SGX tickers: 1-4 alphanumeric, mandatory .SI suffix
   // 3. Case-insensitive GoTo
   // SGX Enabled Regex (for future use):
-  // const TICKER_REGEX = /\b(?:([A-Z]{4,5})(?:\.(?:JK|IJ|ID|jk|ij|id))?|([A-Z0-9]{1,4})\.(?:SI|si)|(GoTo|goto|GOTO))\b/g;
-  
-  // IDX Only Regex (Current):
-  const TICKER_REGEX = /\b(?:([A-Z]{4,5})(?:\.(?:JK|IJ|ID|jk|ij|id))?|(GoTo|goto|GOTO))\b/g;
+  const TICKER_REGEX = /\b(?:([A-Z]{4,5})(?:\.(?:JK|IJ|ID|jk|ij|id))?|([A-Z0-9]{1,4})\.(?:SI|si)|(GoTo|goto|GOTO))\b/g;
 
   let tooltip = null;
   let hideTimeout = null;
@@ -265,9 +262,7 @@
       
       html += `
         <div class="st-section st-ai-chat-card">
-          <div class="st-ai-header">
-            <span class="st-ai-label st-text-fancy">QUICK SUMMARY</span>
-          </div>
+          <span class="st-ai-label">Quick summary</span>
           <p class="st-ai-text">
             <strong>${escHtml(r.name || data.symbol)}</strong> is a <strong>${escHtml(overview.sector || overview.industry || '—')}</strong> company listed on ${exchange}. 
             Currently trading at <strong>${currency} ${formatNum(price)}</strong> with a market cap of ${formatBig(overview.market_cap)}.
@@ -341,9 +336,9 @@
 
     // ── Insider Filings (Skip for SGX) ──
     if (!data.isSgx) {
-      html += `<div class="st-section"><div class="st-section-title">Recent Insider Filings</div>`;
+      html += `<div class="st-section"><div class="st-section-title">RECENT INSIDER FILINGS</div>`;
       if (filings.length === 0) {
-        html += `<p class="st-dim">No recent filings</p>`;
+        html += `<p class="st-dim"><em>No recent filings</em></p>`;
       } else {
         filings.forEach((f) => {
           const txClass = f.transaction_type === "buy" ? "st-buy" : "st-sell";
@@ -382,16 +377,13 @@
             <input type="text" id="st-ai-query" placeholder="Ask Screener about competitors of ${data.symbol}..." />
             <button id="st-btn-ask" title="Send Query">➔</button>
           </div>
-          <p class="st-chat-hint">Sectors Company Screener API</p>
+          <p class="st-chat-hint">Sectors Company Screener API — natural language search</p>
         </div>`;
     } else {
       html += `
-        <div class="st-section st-sgx-notice" style="background: hsla(var(--primary), 0.05); border-radius: 8px; padding: 12px; border: 1px dashed hsla(var(--primary), 0.3); margin-top: 8px;">
-          <p class="st-ai-text" style="font-size: 11px; line-height: 1.5; color: hsl(var(--muted-foreground));">
-            <span style="display: block; font-weight: 800; color: hsl(var(--spectral2)); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em;">SGX Roadmap</span>
-            Advanced AI metrics and natural language screener for SGX coming soon. 
-            Visit <strong>Sectors AI</strong> for deeper analysis.
-          </p>
+        <div class="st-section st-sgx-notice">
+          <span class="st-ai-label">SGX roadmap</span>
+          <p class="st-ai-text">Advanced AI metrics and natural language screener for SGX coming soon. Visit <strong>Sectors AI</strong> for deeper analysis.</p>
         </div>`;
     }
 
@@ -407,12 +399,8 @@
 
     html += `
       <div class="st-footer">
-        <a href="${sectorsUrl}" target="_blank" class="st-ext-link">
-          Open in Sectors.app
-        </a>
-        <a href="${aiChatUrl}" target="_blank" class="st-ext-link st-chat-link">
-          Sectors AI Chat
-        </a>
+        <a href="${sectorsUrl}" target="_blank" class="st-ext-link">Open in Sectors.app</a>
+        <a href="${aiChatUrl}" target="_blank" class="st-ext-link st-chat-link">Sectors AI Chat</a>
       </div>`;
 
     content.innerHTML = html;

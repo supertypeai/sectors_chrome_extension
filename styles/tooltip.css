@@ -1,24 +1,38 @@
-/* tooltip.css — Official Sectors.app Design System */
+/* tooltip.css — Sectors.app Design System */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
+/*
+  ══════════════════════════════════════════════
+  TYPOGRAPHY SYSTEM — 3 levels only
+  ──────────────────────────────────────────────
+  L1 · Label   10px / 700 / UPPERCASE / ls 0.1em
+  L2 · Body    13px / 400–600 / normal
+  L3 · Hero    22px / 800 / tight tracking
+
+  COLOR SYSTEM — 2 colors only
+  ──────────────────────────────────────────────
+  Primary  → hsl(var(--st-fg))
+  Muted    → hsl(var(--st-muted-fg))
+
+  Exception: positive/negative data badges use
+  green/red but only inside .st-positive / .st-negative.
+  ══════════════════════════════════════════════
+*/
+
+/* ── Base & Reset ── */
 #sectors-tooltip {
-  --st-bg: var(--background);
-  --st-fg: var(--foreground);
-  --st-card-bg: var(--card);
-  --st-card-fg: var(--card-foreground);
+  /* Bridge from vars.css */
+  --st-bg:          var(--background);
+  --st-fg:          var(--foreground);
+  --st-card-bg:     var(--card);
+  --st-border-clr:  var(--border);
+  --st-muted-fg:    var(--muted-foreground);
   --st-primary-clr: var(--primary);
-  --st-secondary-clr: var(--secondary);
-  --st-accent-clr: var(--accent);
-  --st-border-clr: var(--border);
-  --st-muted-clr: var(--muted);
-  --st-muted-fg-clr: var(--muted-foreground);
-  
-  /* Spectral Palette mapping */
-  --st-spec1: var(--spectral1);
-  --st-spec2: var(--spectral2);
-  --st-spec4: var(--spectral4);
-  --st-spec7: var(--spectral7);
-  
+
+  /* Fancy gradient (submit button only) */
+  --st-fancy-grad: linear-gradient(90.68deg, #df9439 0.26%, #e5337e 102.37%);
+  --st-easing: cubic-bezier(0.405, 0, 0.025, 1);
+
   all: initial;
   position: absolute;
   z-index: 2147483647;
@@ -29,22 +43,62 @@
   color: hsl(var(--st-fg));
   border: 1px solid hsl(var(--st-border-clr));
   border-radius: 12px;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.8);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8);
   font-family: 'Inter', -apple-system, sans-serif;
-  font-size: 15px;
+  font-size: 13px;          /* L2 base */
+  line-height: 1.5;
   opacity: 0;
   transform: translateY(8px) scale(0.98);
-  transition: opacity 0.2s var(--st-easing), transform 0.2s var(--st-easing), background 0.3s, color 0.3s;
+  transition: opacity 0.2s var(--st-easing), transform 0.2s var(--st-easing);
   pointer-events: none;
   display: none;
   scrollbar-width: none;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11"; /* Inter refinements */
+}
+
+/* L1: Label  - 10px / 700 / UPPERCASE / ls 0.1em */
+.st-label-l1 {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: hsl(var(--st-muted-fg));
+}
+
+/* L2: Body   - 13px / 400–600 / normal */
+.st-body-l2 {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: hsl(var(--st-fg));
+}
+
+/* L3: Hero   - 22px / 800 / tight tracking */
+.st-hero-l3 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: hsl(var(--st-fg));
 }
 
 #sectors-tooltip.light {
-  box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15);
 }
 
-#sectors-tooltip::-webkit-scrollbar { display: none; }
+#sectors-tooltip::-webkit-scrollbar { 
+  width: 6px; 
+}
+#sectors-tooltip::-webkit-scrollbar-track {
+  background: transparent;
+}
+#sectors-tooltip::-webkit-scrollbar-thumb {
+  background: hsla(var(--st-muted-fg), 0.2);
+  border-radius: 10px;
+}
+#sectors-tooltip::-webkit-scrollbar-thumb:hover {
+  background: hsla(var(--st-muted-fg), 0.4);
+}
 
 #sectors-tooltip.st-visible {
   opacity: 1;
@@ -53,29 +107,12 @@
   display: block;
 }
 
-/* ── Fancy Aesthetics ── */
-.st-text-fancy {
-  color: transparent !important;
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-  background-image: var(--st-fancy-grad) !important;
-  font-weight: 900;
-}
-
-.st-border-fancy {
-  border-bottom: 2px solid transparent;
-  background-image: var(--st-fancy-grad);
-  background-repeat: no-repeat;
-  background-position: 0 100%;
-  background-size: 100% 2px;
-}
-
 /* ── Header ── */
 #sectors-tooltip .st-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 20px;
+  padding: 10px 14px;
   background: hsl(var(--st-bg));
   border-bottom: 1px solid hsl(var(--st-border-clr));
   position: sticky;
@@ -86,240 +123,287 @@
 #sectors-tooltip .st-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 #sectors-tooltip .st-logo {
-  height: 18px;
-  width: auto;
+  height: 16px;
+  width: 16px;
   display: block;
+  object-fit: contain;
 }
 
+/* L2 — "Sectors" wordmark */
 #sectors-tooltip .st-brand-name {
-  font-weight: 900;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 600;
   color: hsl(var(--st-fg));
   letter-spacing: -0.01em;
 }
 
+/* L1 — Ticker badge / "pgeo badge" style */
 #sectors-tooltip .st-ticker-badge {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 900;
-  padding: 4px 12px;
-  background: hsl(var(--st-primary-clr));
-  color: hsl(var(--st-bg));
-  border-radius: 6px;
+  padding: 4px 10px;
+  background: hsl(var(--st-primary-clr)); /* Spectral Ruby */
+  color: #fff; /* High contrast */
+  border-radius: 4px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
-/* ── AI Summary Card ── */
+/* ── Summary Card ── */
 #sectors-tooltip .st-ai-chat-card {
   background: hsl(var(--st-card-bg));
-  margin: 16px;
-  border: 1px solid hsl(var(--st-accent-clr));
-  border-radius: 12px;
-  padding: 16px;
-  position: relative;
-  overflow: hidden;
+  margin: 12px 14px;
+  border: 1px solid hsl(var(--st-border-clr));
+  border-radius: 10px;
+  padding: 12px 14px;
 }
 
-#sectors-tooltip .st-ai-chat-card::after {
-  content: "";
-  position: absolute;
-  top: -20%; right: -10%;
-  width: 100px; height: 100px;
-  background: radial-gradient(circle, hsla(var(--st-primary-clr), 0.1) 0%, transparent 70%);
-  filter: blur(20px);
-}
-
-#sectors-tooltip .st-ai-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-#sectors-tooltip .st-ai-spark { color: hsl(var(--st-spec4)); }
+/* L1 label */
 #sectors-tooltip .st-ai-label {
-  font-size: 11px;
-  font-weight: 900;
-  color: hsl(var(--st-spec4));
-  letter-spacing: 0.12em;
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: hsl(var(--st-muted-fg));
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
 }
 
+/* L2 body */
 #sectors-tooltip .st-ai-text {
-  font-size: 14px;
-  line-height: 1.7;
-  color: hsl(var(--st-fg));
+  font-size: 13px;
+  line-height: 1.6;
+  color: hsl(var(--st-muted-fg));
 }
 
-#sectors-tooltip .st-ai-text strong { color: hsl(var(--st-spec4)); }
+/* Bold inside summary → primary fg, no spectral */
+#sectors-tooltip .st-ai-text strong {
+  color: hsl(var(--st-fg));
+  font-weight: 600;
+}
 
-/* ── Metrics ── */
-#sectors-tooltip .st-details { padding: 0 20px 20px; }
+/* ── Company Details ── */
+#sectors-tooltip .st-details {
+  padding: 12px 14px 14px;
+}
 
+/* L3 — Hero company name */
 #sectors-tooltip .st-company-name-large {
-  font-size: 20px;
-  font-weight: 900;
+  font-size: 24px;
+  font-weight: 800;
   color: hsl(var(--st-fg));
-  margin-bottom: 12px;
+  margin-bottom: 4px;
+  padding-left: 12px; /* Align with card content */
   letter-spacing: -0.02em;
+  line-height: 1.1;
 }
 
-#sectors-tooltip .st-meta-row { display: flex; gap: 8px; margin-bottom: 20px; }
+#sectors-tooltip .st-meta-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding-left: 12px; /* Align with card content */
+  flex-wrap: wrap;
+}
 
 #sectors-tooltip .st-tag {
   font-size: 10px;
   font-weight: 700;
-  padding: 4px 12px;
-  background: hsl(var(--st-secondary-clr));
-  color: hsl(var(--st-muted-fg-clr));
+  padding: 2px 8px;
+  background: transparent;
+  color: hsl(var(--st-muted-fg));
   border-radius: 6px;
   border: 1px solid hsl(var(--st-border-clr));
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
+/* Price row */
 #sectors-tooltip .st-price-row-large {
   display: flex;
   align-items: baseline;
-  gap: 14px;
-  margin-bottom: 24px;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
+/* L3 — price value */
 #sectors-tooltip .st-price-val {
-  font-size: 34px;
-  font-weight: 900;
+  font-size: 28px;
+  font-weight: 800;
   color: hsl(var(--st-fg));
+  padding-left: 12px; /* Align with card content */
   letter-spacing: -0.04em;
 }
 
+/* L2 — price change pill */
 #sectors-tooltip .st-price-change {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   padding: 2px 6px;
   border-radius: 4px;
 }
 
-/* Official Indicator Colors */
-#sectors-tooltip .st-positive { 
-  color: hsl(var(--st-spec7)); 
-  background: hsl(var(--st-spectral7) / 0.15);
+/* Positive / Negative — Backgrounds for state, but TEXT remains within 2-color system */
+#sectors-tooltip .st-positive {
+  color: hsl(var(--st-fg));
+  background: hsla(var(--spectral7), 0.2); /* Muted green bg */
 }
-#sectors-tooltip .st-negative { 
-  color: hsl(var(--st-spec4)); 
+#sectors-tooltip .st-negative {
+  color: hsl(var(--st-fg));
+  background: hsla(var(--spectral2), 0.2); /* Muted red bg */
 }
 
+/* Metric grid */
 #sectors-tooltip .st-metric-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 12px;
+  gap: 8px;
 }
 
 #sectors-tooltip .st-metric {
   background: hsl(var(--st-card-bg));
   border: 1px solid hsl(var(--st-border-clr));
-  border-radius: 12px;
-  padding: 14px;
+  border-radius: 10px;
+  padding: 10px 12px;
 }
 
+/* L1 — metric label */
 #sectors-tooltip .st-metric-k {
   display: block;
-  font-size: 11px;
-  color: hsl(var(--st-muted-fg-clr));
+  font-size: 10px;
+  color: hsl(var(--st-muted-fg));
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 8px;
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
 }
 
+/* L2 — metric value */
 #sectors-tooltip .st-metric-v {
-  font-size: 16px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 600;
   color: hsl(var(--st-fg));
 }
 
-/* ── Filings ── */
+/* ── Section Title ── */
+/* L1 Label style */
 #sectors-tooltip .st-section-title {
-  font-size: 11px;
-  font-weight: 900;
-  color: hsl(var(--st-muted-fg-clr));
-  text-transform: uppercase;
+  font-size: 10px;
+  font-weight: 700;
+  color: hsl(var(--st-muted-fg));
   letter-spacing: 0.12em;
-  margin: 20px 20px 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  text-transform: uppercase;
+  margin: 18px 14px 8px;
 }
 
+/* ── Filings ── */
 #sectors-tooltip .st-filing {
   background: hsl(var(--st-card-bg));
   border: 1px solid hsl(var(--st-border-clr));
-  border-radius: 12px;
-  padding: 16px;
-  margin: 0 20px 12px;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 0 14px 8px;
 }
 
 #sectors-tooltip .st-filing-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 
+/* L1 — BUY / SELL badge — positive/negative only */
 #sectors-tooltip .st-tx-badge {
   font-size: 10px;
-  font-weight: 900;
-  padding: 4px 10px;
-  border-radius: 6px;
-}
-
-#sectors-tooltip .st-buy { background: hsl(var(--st-spectral7) / 0.1); color: hsl(var(--st-spec7)); }
-#sectors-tooltip .st-sell { background: hsl(var(--st-spectral1) / 0.1); color: hsl(var(--st-spec1)); }
-
-#sectors-tooltip .st-filing-date { font-size: 11px; color: hsl(var(--st-muted-fg-clr)); }
-
-#sectors-tooltip .st-filing-holder {
-  font-size: 14px;
   font-weight: 700;
-  color: hsl(var(--st-fg));
-  margin-bottom: 8px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
+#sectors-tooltip .st-buy {
+  background: hsla(var(--spectral7), 0.2);
+  color: hsl(var(--st-fg));
+}
+
+#sectors-tooltip .st-sell {
+  background: hsla(var(--spectral2), 0.2);
+  color: hsl(var(--st-fg));
+}
+
+/* L2 muted */
+#sectors-tooltip .st-filing-date {
+  font-size: 12px;
+  color: hsl(var(--st-muted-fg));
+}
+
+/* L2 primary */
+#sectors-tooltip .st-filing-holder {
+  font-size: 13px;
+  font-weight: 600;
+  color: hsl(var(--st-fg));
+  margin-bottom: 4px;
+}
+
+/* L2 muted row */
 #sectors-tooltip .st-filing-detail {
   display: flex;
   justify-content: space-between;
   font-size: 12px;
-  color: hsl(var(--st-muted-fg-clr));
+  color: hsl(var(--st-muted-fg));
 }
 
-#sectors-tooltip .st-filing-val { font-weight: 800; color: hsl(var(--st-fg)); }
+/* value inside filing detail → primary */
+#sectors-tooltip .st-filing-val {
+  font-weight: 600;
+  color: hsl(var(--st-fg));
+}
 
-/* ── Chat ── */
+/* ── Chat Box ── */
 #sectors-tooltip .st-chat-box {
   background: hsl(var(--st-bg));
   border-top: 1px solid hsl(var(--st-border-clr));
-  padding: 20px;
+  padding: 14px;
 }
 
 #sectors-tooltip .st-chat-history {
-  max-height: 200px;
+  max-height: 180px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 10px;
+  margin-bottom: 12px;
+  scrollbar-width: thin;
 }
 
+#sectors-tooltip .st-chat-history::-webkit-scrollbar {
+  width: 4px;
+}
+#sectors-tooltip .st-chat-history::-webkit-scrollbar-track {
+  background: transparent;
+}
+#sectors-tooltip .st-chat-history::-webkit-scrollbar-thumb {
+  background: hsla(var(--st-muted-fg), 0.2);
+  border-radius: 10px;
+}
+
+/* L2 — chat bubbles */
 #sectors-tooltip .st-bubble {
-  padding: 12px 16px;
-  border-radius: 12px;
-  font-size: 14px;
-  line-height: 1.6;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 #sectors-tooltip .st-bubble-user {
   align-self: flex-end;
-  background: hsl(var(--st-primary-clr));
-  color: hsl(var(--st-bg));
+  background: hsl(var(--st-border-clr));
+  color: hsl(var(--st-fg));
   border-bottom-right-radius: 2px;
 }
 
@@ -331,13 +415,41 @@
   border-bottom-left-radius: 2px;
 }
 
+/* Suggestions */
+#sectors-tooltip .st-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-bottom: 10px;
+}
+
+/* L2 — suggestion chips */
+#sectors-tooltip .st-suggest-btn {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 9px;
+  background: transparent;
+  border: 1px solid hsl(var(--st-border-clr));
+  color: hsl(var(--st-muted-fg));
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s var(--st-easing), border-color 0.15s var(--st-easing);
+  font-family: inherit;
+}
+
+#sectors-tooltip .st-suggest-btn:hover {
+  color: hsl(var(--st-fg));
+  border-color: hsl(var(--st-muted-fg));
+}
+
+/* Chat input */
 #sectors-tooltip .st-chat-input-wrap {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   background: hsl(var(--st-card-bg));
   border: 1px solid hsl(var(--st-border-clr));
-  border-radius: 10px;
-  padding: 6px 6px 6px 16px;
+  border-radius: 8px;
+  padding: 5px 5px 5px 12px;
 }
 
 #sectors-tooltip .st-chat-input-wrap input {
@@ -345,188 +457,192 @@
   background: transparent;
   border: none;
   color: hsl(var(--st-fg));
-  font-size: 14px;
+  font-size: 13px;
   outline: none;
+  font-family: inherit;
 }
 
+#sectors-tooltip .st-chat-input-wrap input::placeholder {
+  color: hsl(var(--st-muted-fg));
+}
+
+/* Send button — Dark Red background, White icon for better contrast */
 #sectors-tooltip #st-btn-ask {
-  background: hsl(var(--st-primary-clr));
-  color: hsl(var(--st-bg));
+  background: hsl(var(--st-primary-clr)); /* Ruby */
+  color: #fff; /* White icon for punchy look */
   border: none;
-  border-radius: 8px;
-  width: 36px;
-  height: 36px;
+  border-radius: 6px;
+  width: 30px;
+  height: 30px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 14px;
+  font-weight: 900;
+  transition: opacity 0.15s var(--st-easing);
 }
 
-/* ── Footer ── */
-#sectors-tooltip .st-footer {
-  padding: 16px 20px;
-  display: flex;
-  justify-content: space-between;
-  background: hsl(var(--st-bg));
-  border-top: 1px solid hsl(var(--st-border-clr));
+#sectors-tooltip #st-btn-ask:hover {
+  opacity: 0.9;
 }
 
-#sectors-tooltip .st-ext-link {
-  font-size: 12px;
-  color: hsl(var(--st-muted-fg-clr));
-  text-decoration: none;
-  font-weight: 600;
-}
-
-#sectors-tooltip .st-ext-link:hover {
-  text-decoration: underline dotted;
-  color: hsl(var(--st-spec4));
-}
-
-#sectors-tooltip .st-chat-link {
-  font-weight: 800;
-  background-image: var(--st-fancy-grad);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-/* ── Suggestions ── */
-#sectors-tooltip .st-suggestions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 0 0 16px; /* Removed horizontal padding to align with parent chat-box */
-}
-
-#sectors-tooltip .st-suggest-btn {
+/* Hint below input — muted body, no uppercase */
+#sectors-tooltip .st-chat-hint {
   font-size: 11px;
-  font-weight: 600;
-  padding: 6px 12px;
-  background: hsl(var(--st-card-bg));
-  border: 1px solid hsl(var(--st-border-clr));
-  color: hsl(var(--st-muted-fg-clr));
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: inherit;
+  font-weight: 400;
+  color: hsl(var(--st-muted-fg));
+  margin-top: 8px;
+  text-align: center;
+  opacity: 0.6;
 }
 
-#sectors-tooltip .st-suggest-btn:hover {
-  background: hsl(var(--st-secondary-clr));
-  color: hsl(var(--st-fg));
-  border-color: hsl(var(--st-primary-clr));
-}
-
-/* ── Related Queries (In-Bubble) ── */
+/* Related queries inside AI bubble */
 #sectors-tooltip .st-related-queries-wrap {
-  margin-top: 14px;
-  padding-top: 12px;
+  margin-top: 10px;
+  padding-top: 8px;
   border-top: 1px solid hsl(var(--st-border-clr));
 }
 
+/* L1 */
 #sectors-tooltip .st-related-label {
   font-size: 10px;
-  font-weight: 800;
-  color: hsl(var(--st-muted-fg-clr));
+  font-weight: 700;
+  color: hsl(var(--st-muted-fg));
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 8px;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
 }
 
 #sectors-tooltip .st-related-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
+/* L2 */
 #sectors-tooltip .st-related-btn {
   display: block;
   width: 100%;
   text-align: left;
   font-size: 12px;
-  font-weight: 600;
-  color: #818cf8;
+  font-weight: 500;
+  color: hsl(var(--st-muted-fg));
   background: transparent;
   border: none;
   padding: 2px 0;
   cursor: pointer;
   font-family: inherit;
+  transition: color 0.15s var(--st-easing);
 }
 
 #sectors-tooltip .st-related-btn:hover {
+  color: hsl(var(--st-fg));
   text-decoration: underline;
-  color: hsl(var(--st-spec4));
-}
- 
-#sectors-tooltip .st-chat-hint {
-  font-size: 10px;
-  color: hsl(var(--st-muted-fg-clr));
-  margin-top: 12px;
-  opacity: 0.8;
-}
- 
-/* ── Empty States ── */
-#sectors-tooltip .st-dim {
-  font-size: 13px;
-  color: hsl(var(--st-muted-fg-clr));
-  padding: 0 20px 20px;
-  font-style: italic;
-  display: block;
-}
- 
-#sectors-tooltip .st-section .st-dim {
-  padding: 0 20px 20px;
-}
- 
-#sectors-tooltip .st-details .st-dim {
-  padding: 10px 0 20px;
 }
 
-/* ── Error States ── */
+/* ── Footer ── */
+#sectors-tooltip .st-footer {
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: hsl(var(--st-bg));
+  border-top: 1px solid hsl(var(--st-border-clr));
+}
+
+/* L2 — both footer links: same muted color, same weight */
+#sectors-tooltip .st-ext-link {
+  font-size: 12px;
+  color: hsl(var(--st-muted-fg));
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s var(--st-easing);
+}
+
+#sectors-tooltip .st-ext-link:hover {
+  color: hsl(var(--st-fg));
+}
+
+/* "Sectors AI Chat" — Own font, own spacing, prominent */
+#sectors-tooltip .st-chat-link {
+  font-weight: 800;
+  color: hsl(var(--st-fg));
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 11px;
+}
+
+/* ── Empty / Error States ── */
+/* L2 muted — no italic by default, but <em> allowed */
+#sectors-tooltip .st-dim {
+  font-size: 13px;
+  color: hsl(var(--st-muted-fg));
+  padding: 4px 14px 14px;
+  display: block;
+}
+
+#sectors-tooltip .st-dim em {
+  font-style: italic;
+  font-weight: 400;
+}
+
+#sectors-tooltip .st-section .st-dim {
+  padding: 4px 14px 14px;
+}
+
+#sectors-tooltip .st-details .st-dim {
+  padding: 6px 0 14px;
+}
+
 #sectors-tooltip .st-error {
-  padding: 40px 20px;
+  padding: 36px 20px;
   text-align: center;
-  color: hsl(var(--st-muted-fg-clr));
+  color: hsl(var(--st-muted-fg));
 }
 
 #sectors-tooltip .st-error-icon {
-  font-size: 32px;
-  margin-bottom: 12px;
+  font-size: 26px;
+  margin-bottom: 8px;
 }
 
+/* L2 — action button */
 #sectors-tooltip .st-btn {
-  background: var(--st-fancy-grad);
+  display: inline-block;
+  background: hsl(var(--st-border-clr));
   border: none;
-  color: white;
-  padding: 10px 20px;
+  color: hsl(var(--st-fg));
+  padding: 8px 16px;
   border-radius: 8px;
   cursor: pointer;
-  font-weight: 700;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 13px;
   margin-top: 12px;
-  transition: opacity 0.2s;
+  transition: background 0.15s var(--st-easing);
+  font-family: inherit;
 }
 
 #sectors-tooltip .st-btn:hover {
-  opacity: 0.9;
+  background: hsl(var(--st-muted-fg));
+  color: hsl(var(--st-bg));
 }
 
 #sectors-tooltip .st-btn-link {
   display: inline-block;
   margin-top: 12px;
-  padding: 10px 20px;
-  background: var(--st-fancy-grad);
-  color: hsl(var(--st-bg));
+  padding: 8px 16px;
+  background: hsl(var(--st-border-clr));
+  color: hsl(var(--st-fg));
   border-radius: 8px;
   text-decoration: none;
-  font-size: 14px;
-  font-weight: 700;
-  transition: opacity 0.2s;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.15s var(--st-easing);
 }
 
 #sectors-tooltip .st-btn-link:hover {
-  opacity: 0.9;
+  background: hsl(var(--st-muted-fg));
+  color: hsl(var(--st-bg));
   text-decoration: none;
 }
 
@@ -536,17 +652,17 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
-  gap: 16px;
-  color: hsl(var(--st-muted-fg-clr));
-  font-size: 14px;
+  padding: 48px 20px;
+  gap: 12px;
+  color: hsl(var(--st-muted-fg));
+  font-size: 13px;
 }
 
 #sectors-tooltip .st-spinner {
-  width: 28px;
-  height: 28px;
-  border: 3px solid hsla(var(--st-primary-clr), 0.2);
-  border-top-color: hsl(var(--st-primary-clr));
+  width: 22px;
+  height: 22px;
+  border: 2px solid hsla(var(--st-muted-fg), 0.2);
+  border-top-color: hsl(var(--st-muted-fg));
   border-radius: 50%;
   animation: st-spin 0.8s linear infinite;
 }
