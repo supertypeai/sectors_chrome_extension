@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sectors IDX Lens — Settings</title>
+  <title>Sectors Ticker Lens — Settings</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -23,7 +23,7 @@
         <img src="../icons/android-chrome-192x192.png" class="brand-logo" alt="Sectors Logo" />
         <div>
           <div class="brand-name">Sectors</div>
-          <div class="brand-sub">IDX Ticker Lens</div>
+          <div class="brand-sub">Ticker Lens</div>
         </div>
       </div>
       <nav class="sidebar-nav">
@@ -100,7 +100,7 @@
           <div class="toggle-row">
             <div>
               <div class="toggle-label">Enable hover tooltip</div>
-              <div class="toggle-desc">Show the ticker popup when hovering IDX symbols on any page.</div>
+              <div class="toggle-desc">Show the ticker popup when hovering stock symbols on any page.</div>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="pref-enabled" checked />
@@ -110,15 +110,13 @@
 
           <div class="toggle-row">
             <div>
-              <div class="toggle-label">Theme</div>
+              <div class="toggle-label">Midnight Mode</div>
               <div class="toggle-desc">Switch between Sectors Light and Midnight Dark modes.</div>
             </div>
-            <div class="theme-switch-wrap">
-              <select id="pref-theme" class="text-input" style="width: 120px;">
-                <option value="dark">Midnight</option>
-                <option value="light">Light</option>
-              </select>
-            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="pref-theme-toggle" checked />
+              <span class="toggle-knob"></span>
+            </label>
           </div>
 
           <div class="divider"></div>
@@ -149,10 +147,10 @@
 
         <div class="card about-card">
           <img src="../icons/android-chrome-192x192.png" class="about-logo-img" alt="Sectors Logo" style="width: 64px; height: 64px; margin-bottom: 12px;" />
-          <div class="about-name">Sectors IDX Ticker Lens</div>
-          <div class="about-version">v1.0.0</div>
+          <div class="about-name">Sectors Ticker Lens</div>
+          <div class="about-version">v1.1.0</div>
           <p class="about-desc">
-            Hover any IDX ticker symbol on a webpage to instantly surface company data,
+            Hover any stock ticker symbol on a webpage to instantly surface company data,
             insider filings, and valuation metrics — powered by the
             <a href="https://docs.sectors.app/" target="_blank">Sectors Financial API</a>.
           </p>

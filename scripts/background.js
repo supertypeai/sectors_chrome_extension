@@ -47,7 +47,7 @@ async function handleTickerFetch(symbol, sendResponse) {
       return;
     }
 
-    // Determine if it's SGX or IDX
+    // Determine if it's Singapore or Indonesia stock
     const isSgx = symbol.toLowerCase().endsWith(".si"); 
     const cleanSymbol = symbol.replace(/\.(jk|ij|id|si)$/i, "").toUpperCase();
 
@@ -55,13 +55,14 @@ async function handleTickerFetch(symbol, sendResponse) {
       ? `${API_BASE}/sgx/company/report/${cleanSymbol}/`
       : `${API_BASE}/company/report/${cleanSymbol}/`;
 
+    // SGX filings API is not yet ready
     const filingsUrl = isSgx
-      ? `${API_BASE}/singapore/sgx-filings/?symbol=${cleanSymbol}&limit=5`
+      ? null // `${API_BASE}/singapore/sgx-filings/?symbol=${cleanSymbol}&limit=5`
       : `${API_BASE}/filings/?symbol=${cleanSymbol}&limit=5`;
 
     const tasks = [
       fetchJson(reportUrl, apiKey),
-      fetchJson(filingsUrl, apiKey)
+      filingsUrl ? fetchJson(filingsUrl, apiKey) : Promise.resolve(null)
     ];
 
     const results = await Promise.allSettled(tasks);

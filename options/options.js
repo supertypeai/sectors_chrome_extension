@@ -34,12 +34,18 @@ chrome.storage.sync.get(
       delayVal.textContent = `${prefDelay} ms`;
     }
 
-    const themeSelect = document.getElementById("pref-theme");
+    const themeToggle = document.getElementById("pref-theme-toggle");
     if (prefTheme) {
-      themeSelect.value = prefTheme;
+      const isDark = prefTheme === "dark";
+      themeToggle.checked = isDark;
       applyTheme(prefTheme);
     } else {
-      applyTheme("dark"); // Default to midnight
+      themeToggle.checked = true; // Default to dark/midnight
+      applyTheme("dark");
+    }
+
+    if (prefDelay !== undefined) {
+      updateSliderGradient(delaySlider);
     }
 
     // Pre-populate test ticker
@@ -94,7 +100,7 @@ document.getElementById("btn-test").addEventListener("click", async () => {
     return;
   }
   if (!testTicker || testTicker.length < 2) {
-    showTestResult("Please enter a valid IDX ticker.", false);
+    showTestResult("Please enter a valid ticker.", false);
     return;
   }
 
@@ -143,10 +149,20 @@ const delayVal    = document.getElementById("delay-val");
 
 delaySlider.addEventListener("input", () => {
   delayVal.textContent = `${delaySlider.value} ms`;
+  updateSliderGradient(delaySlider);
 });
 
+function updateSliderGradient(el) {
+  const min = el.min || 50;
+  const max = el.max || 600;
+  const val = el.value;
+  const percentage = ((val - min) / (max - min)) * 100;
+  el.style.backgroundSize = percentage + "% 100%";
+}
+
 document.getElementById("btn-save-prefs").addEventListener("click", () => {
-  const theme = document.getElementById("pref-theme").value;
+  const isDark = document.getElementById("pref-theme-toggle").checked;
+  const theme = isDark ? "dark" : "light";
   const prefs = {
     prefEnabled: document.getElementById("pref-enabled").checked,
     prefDelay:   parseInt(delaySlider.value, 10),
@@ -191,7 +207,7 @@ const tourSteps = [
   {
     target: "#btn-test",
     title: "Test & Done!",
-    text: "Enter a ticker like 'BBCA' and click <strong>Test</strong>. We'll automatically save it if it works. You're ready to hover!"
+    text: "Enter a ticker like 'BBCA' or 'D05.SI' and click <strong>Test</strong>. We'll automatically save it if it works. You're ready to hover!"
   }
 ];
 

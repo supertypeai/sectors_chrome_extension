@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sectors IDX Lens</title>
+  <title>Sectors Ticker Lens</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -22,7 +22,7 @@
         <img src="../icons/android-chrome-192x192.png" class="brand-logo" alt="Sectors Logo" style="width: 24px; height: 24px;" />
         <div class="brand-text">
           <span class="brand-name">Sectors</span>
-          <span class="brand-sub">IDX · SGX Ticker Lens</span>
+          <span class="brand-sub">Ticker Lens</span>
         </div>
       </div>
       <button class="settings-btn" id="btn-settings" title="Open Settings">Settings</button>
@@ -61,9 +61,41 @@
       <div id="result-content"></div>
     </div>
 
+    <!-- Personalization -->
+    <div class="section personalization-section">
+      <div class="section-label">Personalization</div>
+      <div class="pref-row">
+        <div class="pref-info">
+          <div class="pref-name">Enable hover tooltip</div>
+          <div class="pref-desc">Show popup when hovering tickers</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="pref-enabled" checked />
+          <span class="toggle-knob"></span>
+        </label>
+      </div>
+      <div class="pref-row">
+        <div class="pref-info">
+          <div class="pref-name">Midnight Mode</div>
+          <div class="pref-desc">Switch between Dark and Light</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="pref-theme-toggle" />
+          <span class="toggle-knob"></span>
+        </label>
+      </div>
+      <div class="pref-row">
+        <div class="pref-info">
+          <div class="pref-name">Hover delay</div>
+          <div class="pref-desc" id="delay-val">120 ms</div>
+        </div>
+        <input type="range" id="pref-delay" min="50" max="600" step="50" value="120" class="pref-slider" />
+      </div>
+    </div>
+
     <!-- Footer -->
     <div class="popup-footer">
-      <span>Hover any IDX/SGX ticker · append .SI for SGX</span>
+      <span>Hover any ticker</span>
       <a href="https://docs.sectors.app/" target="_blank" class="footer-link">API Docs</a>
     </div>
   </div>

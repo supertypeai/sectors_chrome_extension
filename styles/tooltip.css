@@ -473,7 +473,7 @@
 /* Send button — Dark Red background, White icon for better contrast */
 #sectors-tooltip #st-btn-ask {
   background: hsl(var(--st-primary-clr)); /* Ruby */
-  color: #fff; /* White icon for punchy look */
+  color: #000; /* Black icon for high contrast */
   border: none;
   border-radius: 6px;
   width: 30px;

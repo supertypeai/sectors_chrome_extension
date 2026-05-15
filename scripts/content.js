@@ -1,10 +1,10 @@
-// content.js — IDX Ticker Hover Detection & Tooltip
+// content.js — Ticker Hover Detection & Tooltip
 
 (function () {
   "use strict";
 
   // Updated regex:
-  // 1. IDX tickers: 4 uppercase letters, optional suffix
+  // 1. Indonesia tickers: 4 uppercase letters, optional suffix
   // 2. SGX tickers: 1-4 alphanumeric, mandatory .SI suffix
   // 3. Case-insensitive GoTo
   // SGX Enabled Regex (for future use):
@@ -216,7 +216,7 @@
         <div class="st-error">
           <div class="st-error-icon"></div>
           <p>Ticker not found.</p>
-          <p style="font-size:12px; margin-top:4px;">${escHtml(data.symbol)} does not exist on ${data.isSgx ? 'SGX' : 'IDX'}.</p>
+          <p style="font-size:12px; margin-top:4px;">${escHtml(data.symbol)} does not exist in our database.</p>
         </div>`;
       return;
     }
@@ -255,7 +255,7 @@
     // ── Summary Card ──
     if (r && r.overview) {
       const overview = r.overview;
-      const exchange = data.isSgx ? "SGX" : "IDX";
+      const exchange = data.isSgx ? "Singapore" : "Indonesia";
       const currency = data.isSgx ? "SGD" : "IDR";
       // Try multiple possible price fields
       const price = overview.last_close_price || overview.close_price || overview.price || null;
@@ -334,7 +334,7 @@
       html += `<div class="st-section st-details"><div class="st-company-name-large">${escHtml(data.symbol)}</div><p class="st-dim">Company report unavailable</p></div>`;
     }
 
-    // ── Insider Filings (IDX only) ──
+    // ── Insider Filings (Indonesia only) ──
     const currency = data.isSgx ? "SGD" : "IDR";
     if (!data.isSgx) {
       html += `<div class="st-section"><div class="st-section-title">RECENT INSIDER FILINGS</div>`;
@@ -363,7 +363,7 @@
       html += `</div>`;
     }
 
-    // ── AI Chat Area (IDX Only) ──
+    // ── AI Chat Area (Indonesia Only) ──
     if (!data.isSgx) {
       html += `
         <div class="st-section st-chat-box">
@@ -394,7 +394,7 @@
 
     html += `
       <div class="st-footer">
-        <a href="${sectorsUrl}" target="_blank" class="st-ext-link">Open in sectors.app</a>
+        <a href="${sectorsUrl}" target="_blank" class="st-ext-link">open in sectors.app</a>
         <a href="${aiChatUrl}" target="_blank" class="st-ext-link st-chat-link">Sectors AI Chat</a>
       </div>`;
 

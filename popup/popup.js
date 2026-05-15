@@ -10,6 +10,10 @@ const btnSettings   = document.getElementById("btn-settings");
 const btnSetKey     = document.getElementById("btn-set-key");
 const resultArea    = document.getElementById("result-area");
 const resultContent = document.getElementById("result-content");
+const prefEnabled   = document.getElementById("pref-enabled");
+const prefThemeToggle = document.getElementById("pref-theme-toggle");
+const prefDelay     = document.getElementById("pref-delay");
+const delayVal      = document.getElementById("delay-val");
 
 // ── Init ──────────────────────────────────────────────────────────────────
 chrome.storage.sync.get(["sectorsApiKey", "prefTheme"], ({ sectorsApiKey, prefTheme }) => {
@@ -37,6 +41,23 @@ chrome.storage.sync.get(["sectorsApiKey", "prefTheme"], ({ sectorsApiKey, prefTh
   }
 });
 
+// Load preferences
+chrome.storage.sync.get(["prefEnabled", "prefTheme", "prefDelay"], (res) => {
+  if (res.prefEnabled !== undefined) {
+    prefEnabled.checked = res.prefEnabled;
+  }
+  if (res.prefTheme) {
+    const isDark = res.prefTheme === "dark";
+    prefThemeToggle.checked = isDark;
+    applyTheme(res.prefTheme);
+  }
+  if (res.prefDelay) {
+    prefDelay.value = res.prefDelay;
+    delayVal.textContent = `${res.prefDelay} ms`;
+    updateSliderGradient(prefDelay);
+  }
+});
+
 function applyTheme(theme) {
   if (theme === "light") {
     document.documentElement.classList.add("light");
@@ -55,6 +76,35 @@ btnSearch.addEventListener("click", doSearch);
 tickerInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") doSearch();
 });
+
+// ── Personalization ───────────────────────────────────────────────────────
+prefEnabled.addEventListener("change", () => {
+  chrome.storage.sync.set({ prefEnabled: prefEnabled.checked });
+});
+
+prefThemeToggle.addEventListener("change", () => {
+  const theme = prefThemeToggle.checked ? "dark" : "light";
+  applyTheme(theme);
+  chrome.storage.sync.set({ prefTheme: theme });
+});
+
+prefDelay.addEventListener("input", () => {
+  const val = prefDelay.value;
+  delayVal.textContent = `${val} ms`;
+  updateSliderGradient(prefDelay);
+});
+
+prefDelay.addEventListener("change", () => {
+  chrome.storage.sync.set({ prefDelay: parseInt(prefDelay.value, 10) });
+});
+
+function updateSliderGradient(el) {
+  const min = el.min || 0;
+  const max = el.max || 100;
+  const val = el.value;
+  const percentage = ((val - min) / (max - min)) * 100;
+  el.style.backgroundSize = percentage + "% 100%";
+}
 
 async function doSearch() {
   const raw    = tickerInput.value.trim();
@@ -84,7 +134,7 @@ async function doSearch() {
         ? `${API_BASE}/sgx/company/report/${symbol}/`
         : `${API_BASE}/company/report/${symbol}/`;
 
-      // Filings are IDX-only
+      // Filings are Indonesia-only
       const tasks = isSgx
         ? [fetchJson(reportUrl, sectorsApiKey)]
         : [fetchJson(reportUrl, sectorsApiKey), fetchJson(`${API_BASE}/filings/?symbol=${symbol}&limit=5`, sectorsApiKey)];
@@ -97,7 +147,7 @@ async function doSearch() {
       if (reportRes.status === "rejected") {
         const msg = reportRes.reason.message.toLowerCase();
         if (msg.includes("does not exist") || msg.includes("not found")) {
-          showError("", "Ticker Not Found", `${symbol} does not exist as an ${isSgx ? 'SGX' : 'IDX'} stock.`);
+          showError("", "Ticker Not Found", `${symbol} does not exist in our database.`);
           return;
         }
         throw new Error(reportRes.reason.message);
@@ -179,7 +229,7 @@ function renderResult({ symbol, report, filings, isSgx }) {
       </div>`;
   }
 
-  // ── Insider Filings (IDX only) ──
+  // ── Insider Filings (Indonesia only) ──
   const currency = isSgx ? "SGD" : "IDR";
   if (!isSgx) {
     html += `<div class="filings-section"><div class="filings-title">RECENT INSIDER FILINGS</div>`;
@@ -218,7 +268,7 @@ function renderResult({ symbol, report, filings, isSgx }) {
       <a class="sectors-link"
          href="${sectorsUrl}"
          target="_blank">
-        View full report on sectors.app
+        open in sectors.app
       </a>
     </div>`;
 
