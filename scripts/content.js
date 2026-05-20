@@ -3,12 +3,23 @@
 (function () {
   "use strict";
 
-  // Updated regex:
-  // 1. Indonesia tickers: 4 uppercase letters, optional suffix
-  // 2. SGX tickers: 1-4 alphanumeric, mandatory .SI suffix
-  // 3. Case-insensitive GoTo
-  // SGX Enabled Regex (for future use):
-  const TICKER_REGEX = /\b(?:([A-Z0-9]{1,4})\.(?:SI|si)|([A-Z]{4,5})(?:\.(?:JK|IJ|ID|jk|ij|id))?|(GoTo|goto|GOTO))\b/gi;
+  // O(1) Lookups in Memory for whitelists
+  let validIdxTickers = new Set(["GOTO"]); // Pre-fill with known defaults
+  let validSgxTickers = new Set();
+
+  // Load the whitelists from storage
+  if (typeof chrome !== "undefined" && chrome.storage?.local) {
+    chrome.storage.local.get(["validIdxTickers", "validSgxTickers"], (res) => {
+      if (res.validIdxTickers) validIdxTickers = new Set(res.validIdxTickers);
+      if (res.validSgxTickers) validSgxTickers = new Set(res.validSgxTickers);
+    });
+  }
+
+  // The Smart Regex
+  // - Matches any case IF it has an explicit suffix (e.g. bbca.jk, d05.si)
+  // - STRICTLY requires UPPERCASE for naked words (e.g. BBCA). 
+  //   This prevents normal lowercase text ("this", "that") from ever matching.
+  const FAST_TICKER_REGEX = /\b([A-Za-z0-9]{1,4}\.[sS][iI]|[A-Za-z]{4,5}\.(?:[jJ][kK]|[iI][jJ]|[iI][dD])|[A-Z0-9]{3,5}|GoTo)\b/g;
 
   let tooltip = null;
   let hideTimeout = null;
@@ -44,6 +55,10 @@
         prefTheme = changes.prefTheme.newValue;
         if (tooltip) applyTheme(tooltip, prefTheme);
       }
+    }
+    if (area === "local") {
+      if (changes.validIdxTickers) validIdxTickers = new Set(changes.validIdxTickers.newValue || []);
+      if (changes.validSgxTickers) validSgxTickers = new Set(changes.validSgxTickers.newValue || []);
     }
   });
 
@@ -516,46 +531,82 @@
     const el = document.elementFromPoint(x, y);
     if (!el) return null;
     
-    // If hovering the tooltip itself, keep it alive
+    // Keep tooltip alive if hovering over it
     if (el.id === "sectors-tooltip" || el.closest("#sectors-tooltip")) {
       return currentSymbol; 
     }
 
-    // Optimization: If the element's text doesn't even look like it has a ticker, skip walking
-    TICKER_REGEX.lastIndex = 0;
-    if (!TICKER_REGEX.test(el.textContent)) {
-      return null;
-    }
+    // Pre-filter: If the container has no text matching the pattern, skip DOM walking entirely
+    FAST_TICKER_REGEX.lastIndex = 0;
+    if (!FAST_TICKER_REGEX.test(el.textContent)) return null;
 
-    // Walk text nodes in the element
     const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
     let node;
+
     while ((node = walker.nextNode())) {
       const text = node.textContent;
-      // Reset regex state
-      TICKER_REGEX.lastIndex = 0;
+      FAST_TICKER_REGEX.lastIndex = 0;
       let match;
-      while ((match = TICKER_REGEX.exec(text)) !== null) {
+      
+      while ((match = FAST_TICKER_REGEX.exec(text)) !== null) {
+        let rawSymbol = match[0];
+        let upper = rawSymbol.toUpperCase();
+
+        // --- GATEKEEPER LOGIC ---
+        let hasSgxSuffix = upper.endsWith('.SI');
+        let hasIdxSuffix = upper.match(/\.(JK|IJ|ID)$/);
+        let cleanSymbol = upper.replace(/\.(SI|JK|IJ|ID)$/, "");
+        
+        let isValid = false;
+        let finalSymbolToReturn = upper; // Preserve explicit suffixes if user typed them
+
+        if (hasSgxSuffix) {
+          if (validSgxTickers.size === 0 || validSgxTickers.has(cleanSymbol)) {
+            isValid = true;
+          }
+        } else if (hasIdxSuffix) {
+          if (validIdxTickers.size === 0 || validIdxTickers.has(cleanSymbol)) {
+            isValid = true;
+          }
+        } else {
+          // It's a "naked" word (e.g., "BBCA", "D05")
+          if (/\d/.test(cleanSymbol)) {
+            // Has numbers -> Must be SGX
+            // If our list is loaded, verify it. If not, fallback to true but force .SI suffix
+            if (validSgxTickers.size === 0 || validSgxTickers.has(cleanSymbol)) {
+              isValid = true;
+              finalSymbolToReturn = cleanSymbol + ".SI"; // Append .SI so background.js knows it's SGX
+            }
+          } else {
+            // Pure letters -> Check IDX and SGX whitelist
+            if (cleanSymbol === "GOTO" || validIdxTickers.has(cleanSymbol)) {
+              isValid = true;
+            } else if (validSgxTickers.has(cleanSymbol)) {
+              isValid = true;
+              finalSymbolToReturn = cleanSymbol + ".SI"; 
+            }
+          }
+        }
+
+        // If it failed the whitelist, skip layout calculation! (Saves massive CPU and prevents API spam)
+        if (!isValid) continue;
+
+        // --- GEOMETRY CHECK ---
+        // Only runs if the text is a 100% confirmed stock ticker
         try {
           const range = document.createRange();
           range.setStart(node, match.index);
-          range.setEnd(node, match.index + match[0].length);
+          range.setEnd(node, match.index + rawSymbol.length);
           const rects = range.getClientRects();
           
           for (let i = 0; i < rects.length; i++) {
             const rect = rects[i];
-            if (
-              x >= rect.left &&
-              x <= rect.right &&
-              y >= rect.top &&
-              y <= rect.bottom
-            ) {
-              // Return the full matched string so suffixes like .SI are preserved
-              return match[0].toUpperCase();
+            if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+              return finalSymbolToReturn; 
             }
           }
         } catch (err) {
-          // Range can fail if node is detached
+          // Range fails if node is detached, safe to ignore
         }
       }
     }

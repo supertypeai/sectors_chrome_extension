@@ -5,10 +5,12 @@
   "description": "Hover over any ticker to get real-time company data and insider filings from Sectors.app",
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "alarms"
   ],
   "host_permissions": [
-    "https://api.sectors.app/*"
+    "https://api.sectors.app/*",
+    "https://raw.githubusercontent.com/*"
   ],
   "background": {
     "service_worker": "scripts/background.js"
