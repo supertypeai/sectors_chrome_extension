@@ -3,12 +3,8 @@
 
 const API_BASE = "https://api.sectors.app/v2";
 
-// Securely obfuscated URL to pull active companies without triggering simple audits
-const TICKERS_LIST_URL = [
-  "htt", "ps://", "raw.git", "hubuser", "content.c", "om/su", 
-  "pertype", "ai/sec", "tors_ch", "rome_ex", "tension", 
-  "/main/a", "ctive_c", "ompanie", "s.json"
-].join("");
+// URL to pull the active companies ticker list
+const TICKERS_LIST_URL = "https://raw.githubusercontent.com/supertypeai/sectors_chrome_extension/main/active_companies.json";
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === "install") {

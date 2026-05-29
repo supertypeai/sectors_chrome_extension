@@ -5,7 +5,6 @@
   "description": "Hover over any ticker to get real-time company data and insider filings from Sectors.app",
   "permissions": [
     "storage",
-    "activeTab",
     "alarms"
   ],
   "host_permissions": [

@@ -99,7 +99,6 @@ Hover over any stock symbol on a news site, blog, or financial forum (e.g. `TLKM
 
 Built with Manifest V3 to ensure the highest standards of safety, privacy, and performance:
 *   **`storage`**: Used exclusively to secure and sync your API key and preferences across your Chrome profile.
-*   **`activeTab`**: Grants standard permission to inject the hover tooltip onto your current tab safely.
 *   **`alarms`**: Establishes a weekly background alarm to sync the latest active company whitelist without background performance overhead.
 *   **Host Permissions (`https://api.sectors.app/*`, `https://raw.githubusercontent.com/*`)**: Allows secure, sandboxed network requests to Sectors API endpoints and updates the local ticker whitelists.
 *   **Zero History Collection**: No browsing history, personal data, or cookies are ever tracked, logged, or sent to external services.
