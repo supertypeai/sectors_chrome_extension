@@ -91,7 +91,9 @@ document.getElementById("btn-clear").addEventListener("click", () => {
 
 // ── Test Connection ───────────────────────────────────────────────────────
 document.getElementById("btn-test").addEventListener("click", async () => {
-  const testTicker = document.getElementById("test-ticker").value.trim().toUpperCase().replace(/\.JK$/i, "");
+  const rawTicker  = document.getElementById("test-ticker").value.trim();
+  const isSgxTest  = rawTicker.toLowerCase().endsWith(".si");
+  const testTicker = rawTicker.toUpperCase().replace(/\.(JK|SI)$/i, "");
   const resultEl   = document.getElementById("test-result");
   const key        = apiKeyInput.value.trim();
 
@@ -106,8 +108,13 @@ document.getElementById("btn-test").addEventListener("click", async () => {
 
   showTestResult("Testing connection...", null);
 
+  // Route IDX → /v2/filings/, SGX → /v2/sgx/filings/ based on the ticker's suffix
+  const testUrl = isSgxTest
+    ? `${API_BASE}/sgx/filings/?symbol=${testTicker}&limit=1`
+    : `${API_BASE}/filings/?symbol=${testTicker}&limit=1`;
+
   try {
-    const res = await fetch(`${API_BASE}/filings/?symbol=${testTicker}&limit=1`, {
+    const res = await fetch(testUrl, {
       headers: { Authorization: key },
     });
 

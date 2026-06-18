@@ -134,14 +134,16 @@ async function doSearch() {
         ? `${API_BASE}/sgx/company/report/${symbol}/`
         : `${API_BASE}/company/report/${symbol}/`;
 
-      // Filings are Indonesia-only
-      const tasks = isSgx
-        ? [fetchJson(reportUrl, sectorsApiKey)]
-        : [fetchJson(reportUrl, sectorsApiKey), fetchJson(`${API_BASE}/filings/?symbol=${symbol}&limit=5`, sectorsApiKey)];
+      // Insider filings: IDX → /v2/filings/, SGX → /v2/sgx/filings/
+      const filingsUrl = isSgx
+        ? `${API_BASE}/sgx/filings/?symbol=${symbol}&limit=5`
+        : `${API_BASE}/filings/?symbol=${symbol}&limit=5`;
+
+      const tasks = [fetchJson(reportUrl, sectorsApiKey), fetchJson(filingsUrl, sectorsApiKey)];
 
       const results = await Promise.allSettled(tasks);
       const reportRes = results[0];
-      const filingsRes = isSgx ? null : results[1];
+      const filingsRes = results[1];
 
       // Check for ticker not found error
       if (reportRes.status === "rejected") {
@@ -154,7 +156,9 @@ async function doSearch() {
       }
 
       const report  = reportRes.value;
-      const filings = filingsRes && filingsRes.status === "fulfilled" ? filingsRes.value : null;
+      const filingsRaw = filingsRes && filingsRes.status === "fulfilled" ? filingsRes.value : null;
+      // SGX filings use `price_per_share`; normalise to `price` so the renderer is exchange-agnostic.
+      const filings = filingsRaw ? normaliseFilings(filingsRaw, isSgx) : null;
 
       renderResult({ symbol, report, filings, isSgx });
     } catch (err) {
@@ -229,9 +233,9 @@ function renderResult({ symbol, report, filings, isSgx }) {
       </div>`;
   }
 
-  // ── Insider Filings (Indonesia only) ──
+  // ── Insider Filings (IDX + SGX) ──
   const currency = isSgx ? "SGD" : "IDR";
-  if (!isSgx) {
+  {
     html += `<div class="filings-section"><div class="filings-title">RECENT INSIDER FILINGS</div>`;
     if (filingRows.length === 0) {
       html += `<p class="no-filings"><em>No recent filings</em></p>`;
@@ -295,6 +299,21 @@ function showError(icon, title, detail, isHtml = false) {
         ${isHtml ? detail : esc(detail)}
       </div>
     </div>`;
+}
+
+// SGX filings expose the share price as `price_per_share`, while IDX uses `price`.
+// Mirror SGX's price field into `price` so renderers can stay exchange-agnostic.
+function normaliseFilings(filingsPayload, isSgx) {
+  if (!isSgx || !filingsPayload || !Array.isArray(filingsPayload.results)) {
+    return filingsPayload;
+  }
+  const results = filingsPayload.results.map((f) => {
+    if (f && f.price == null && f.price_per_share != null) {
+      return { ...f, price: f.price_per_share };
+    }
+    return f;
+  });
+  return { ...filingsPayload, results };
 }
 
 // ── Utils ─────────────────────────────────────────────────────────────────

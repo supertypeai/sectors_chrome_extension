@@ -58,7 +58,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true; // keep message channel open for async
   }
   if (request.type === "FETCH_AI_RESULTS") {
-    handleAiSearch(request.query, sendResponse);
+    handleAiSearch(request.query, sendResponse, !!request.isSgx);
     return true;
   }
   if (request.type === "OPEN_OPTIONS") {
@@ -67,7 +67,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-async function handleAiSearch(query, sendResponse) {
+async function handleAiSearch(query, sendResponse, isSgx = false) {
   try {
     const apiKey = await getApiKey();
     if (!apiKey) {
@@ -75,7 +75,12 @@ async function handleAiSearch(query, sendResponse) {
       return;
     }
 
-    const data = await fetchJson(`${API_BASE}/companies/?q=${encodeURIComponent(query)}`, apiKey);
+    // Route IDX → /v2/companies/, SGX → /v2/sgx/companies/ (natural-language company screener)
+    const url = isSgx
+      ? `${API_BASE}/sgx/companies/?q=${encodeURIComponent(query)}`
+      : `${API_BASE}/companies/?q=${encodeURIComponent(query)}`;
+
+    const data = await fetchJson(url, apiKey);
     sendResponse({ results: data.results || [] });
   } catch (err) {
     sendResponse({ error: err.message });
@@ -98,9 +103,9 @@ async function handleTickerFetch(symbol, sendResponse) {
       ? `${API_BASE}/sgx/company/report/${cleanSymbol}/`
       : `${API_BASE}/company/report/${cleanSymbol}/`;
 
-    // SGX filings API is not yet ready
+    // Insider filings: IDX → /v2/filings/, SGX → /v2/sgx/filings/
     const filingsUrl = isSgx
-      ? null // `${API_BASE}/singapore/sgx-filings/?symbol=${cleanSymbol}&limit=5`
+      ? `${API_BASE}/sgx/filings/?symbol=${cleanSymbol}&limit=5`
       : `${API_BASE}/filings/?symbol=${cleanSymbol}&limit=5`;
 
     const tasks = [
@@ -123,12 +128,31 @@ async function handleTickerFetch(symbol, sendResponse) {
     }
 
     const report = reportRes.value;
-    const filings = filingsRes.status === "fulfilled" ? filingsRes.value : null;
+    const filingsRaw = filingsRes.status === "fulfilled" ? filingsRes.value : null;
+
+    // Normalise SGX filings (price_per_share → price) so downstream renderers
+    // can use a single f.price field, matching the IDX contract.
+    const filings = filingsRaw ? normaliseFilings(filingsRaw, isSgx) : null;
 
     sendResponse({ report, filings, symbol: cleanSymbol, isSgx });
   } catch (err) {
     sendResponse({ error: err.message });
   }
+}
+
+// SGX filings expose the share price as `price_per_share`, while IDX uses `price`.
+// Mirror SGX's price field into `price` so renderers can stay exchange-agnostic.
+function normaliseFilings(filingsPayload, isSgx) {
+  if (!isSgx || !filingsPayload || !Array.isArray(filingsPayload.results)) {
+    return filingsPayload;
+  }
+  const normalised = filingsPayload.results.map((f) => {
+    if (f && f.price == null && f.price_per_share != null) {
+      return { ...f, price: f.price_per_share };
+    }
+    return f;
+  });
+  return { ...filingsPayload, results: normalised };
 }
 
 async function fetchJson(url, apiKey) {

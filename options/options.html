@@ -148,7 +148,7 @@
         <div class="card about-card">
           <img src="../icons/android-chrome-192x192.png" class="about-logo-img" alt="Sectors Logo" style="width: 64px; height: 64px; margin-bottom: 12px;" />
           <div class="about-name">Sectors Ticker Lens</div>
-          <div class="about-version">v1.1.0</div>
+          <div class="about-version">v1.1.1</div>
           <p class="about-desc">
             Hover any stock ticker symbol on a webpage to instantly surface company data,
             insider filings, and valuation metrics — powered by the
@@ -167,6 +167,8 @@
               <tr><td><code>GET /v2/company/report/{symbol}/</code></td><td>IDX company price & valuation</td></tr>
               <tr><td><code>GET /v2/klse/company/report/{symbol}/</code></td><td>KLSE company price & valuation</td></tr>
               <tr><td><code>GET /v2/sgx/company/report/{symbol}/</code></td><td>SGX company price & valuation</td></tr>
+              <tr><td><code>GET /v2/sgx/companies/</code></td><td>SGX natural language company screener</td></tr>
+              <tr><td><code>GET /v2/sgx/filings/</code></td><td>SGX insider transaction filings</td></tr>
               <tr><td><code>GET /v2/company/get-segments/{symbol}/</code></td><td>Revenue segments breakdown</td></tr>
               <tr><td><code>GET /v2/company/quarterly-financials/</code></td><td>Historical quarterly financials</td></tr>
               <tr><td><code>GET /v2/sector/report/{sector}/</code></td><td>Sector performance & metrics</td></tr>

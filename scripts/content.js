@@ -349,9 +349,9 @@
       html += `<div class="st-section st-details"><div class="st-company-name-large">${escHtml(data.symbol)}</div><p class="st-dim">Company report unavailable</p></div>`;
     }
 
-    // ── Insider Filings (Indonesia only) ──
+    // ── Insider Filings (both IDX and SGX) ──
     const currency = data.isSgx ? "SGD" : "IDR";
-    if (!data.isSgx) {
+    {
       html += `<div class="st-section"><div class="st-section-title">RECENT INSIDER FILINGS</div>`;
       if (filings.length === 0) {
         html += `<p class="st-dim"><em>No recent filings</em></p>`;
@@ -378,22 +378,33 @@
       html += `</div>`;
     }
 
-    // ── AI Chat Area (Indonesia Only) ──
-    if (!data.isSgx) {
+    // ── AI Chat Area (IDX + SGX) ──
+    {
+      const sector = escHtml(r.overview?.sector || 'same');
+      const subSector = escHtml(r.overview?.sub_sector || 'same sector');
+      const mcap = r.overview?.market_cap || 0;
+      const exchangeLabel = data.isSgx ? "SGX" : "IDX";
+      const suggestions = data.isSgx
+        ? `
+            <button class="st-suggest-btn" data-q="top 5 ${exchangeLabel} companies in the ${sector} sector by market cap">Sector Leaders</button>
+            <button class="st-suggest-btn" data-q="${exchangeLabel} companies in the ${sector} sector with pe < 15">Value Peers (P/E < 15)</button>
+            <button class="st-suggest-btn" data-q="top 5 ${exchangeLabel} companies by revenue[2024]">High Revenue Peers</button>
+            <button class="st-suggest-btn" data-q="top ${exchangeLabel} companies by forward_dividend_yield">Top Div Payers</button>`
+        : `
+            <button class="st-suggest-btn" data-q="show me companies in the ${sector} sector with market_cap > ${mcap}">Sector Leaders</button>
+            <button class="st-suggest-btn" data-q="show me companies in the ${sector} sector with pe_ttm < 15">Value Peers (P/E < 15)</button>
+            <button class="st-suggest-btn" data-q="show me companies with revenue > 100000000000 in 2025 q2">High Revenue Peers</button>
+            <button class="st-suggest-btn" data-q="list top dividend payers in the ${subSector}">Top Div Payers</button>`;
+
       html += `
         <div class="st-section st-chat-box">
           <div id="st-chat-output" class="st-chat-history"></div>
-          <div class="st-suggestions" id="st-suggestions">
-            <button class="st-suggest-btn" data-q="show me companies in the ${escHtml(r.overview?.sector || 'same')} sector with market_cap > ${r.overview?.market_cap || 0}">Sector Leaders</button>
-            <button class="st-suggest-btn" data-q="show me companies in the ${escHtml(r.overview?.sector || 'same')} sector with pe_ttm < 15">Value Peers (P/E < 15)</button>
-            <button class="st-suggest-btn" data-q="show me companies with revenue > 100000000000 in 2025 q2">High Revenue Peers</button>
-            <button class="st-suggest-btn" data-q="list top dividend payers in the ${escHtml(r.overview?.sub_sector || 'same sector')}">Top Div Payers</button>
-          </div>
+          <div class="st-suggestions" id="st-suggestions">${suggestions}</div>
           <div class="st-chat-input-wrap">
             <input type="text" id="st-ai-query" placeholder="Ask Screener about competitors of ${data.symbol}..." />
             <button id="st-btn-ask" title="Send Query">➔</button>
           </div>
-          <p class="st-chat-hint">Sectors Company Screener API — natural language search</p>
+          <p class="st-chat-hint">Sectors ${exchangeLabel} Company Screener API — natural language search</p>
         </div>`;
     }
 
@@ -434,7 +445,7 @@
       // Show thinking
       const thinking = appendChatBubble(output, "Thinking...", 'ai');
       
-      safeSendMessage({ type: "FETCH_AI_RESULTS", query: q }, (res) => {
+      safeSendMessage({ type: "FETCH_AI_RESULTS", query: q, isSgx: data.isSgx }, (res) => {
         if (res.error) {
           thinking.textContent = "Error: " + res.error;
         } else {
@@ -444,15 +455,16 @@
           if (res.results && res.results.length > 0) {
             const companies = res.results.slice(0, 3);
             text = `I found ${res.results.length} results matching your query:\n\n`;
-            
+            const aiCurrency = data.isSgx ? "SGD" : "IDR";
+
             companies.forEach(c => {
               const qv = c.query_values || {};
               let metrics = [];
-              
+
               // Base metrics or fallback to query_values
               const price = c.last_close_price || qv.last_close_price;
-              if (price) metrics.push(`Price: IDR ${formatNum(price)}`);
-              
+              if (price) metrics.push(`Price: ${aiCurrency} ${formatNum(price)}`);
+
               const mcap = c.market_cap || qv.market_cap;
               if (mcap) metrics.push(`Mkt Cap: ${formatBig(mcap)}`);
 

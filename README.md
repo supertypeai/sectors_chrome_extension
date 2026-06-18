@@ -1,4 +1,4 @@
-# Sectors Ticker Lens (v1.1.0)
+# Sectors Ticker Lens (v1.1.1)
 
 A high-performance Chrome extension that surfaces real-time financial data, valuation metrics, insider trading filings, and natural language AI screening when you hover over stock symbols on any webpage. Fully optimized for both Indonesian (IDX) and Singaporean (SGX) financial markets.
 
@@ -20,17 +20,17 @@ A high-performance Chrome extension that surfaces real-time financial data, valu
 *   **Zero-Lag DOM Walking**: Uses an advanced regex check to identify candidate strings, and immediately verifies them against the whitelist in **O(1)** time *before* performing expensive DOM layout calculations (`document.createRange()`, `getClientRects()`) or making API requests. This eliminates browser lag on text-heavy pages and prevents false-positive API spam.
 *   **LRU Caching Layer**: Implements a client-side Least Recently Used (LRU) cache in local storage (up to 10 ticker records, valid for 1 hour) to make subsequent hovers completely instantaneous and reduce server load.
 
-### 3. Integrated Natural Language AI Chat (IDX Only)
-*   **In-Tooltip AI Screener**: Ask natural language questions about competitors, sectors, or rankings directly from the tooltip. Powered by the **Sectors Natural Language Company Screener API** (`/v2/companies/`).
-*   **Quick Prompt Chips**: Instant-click suggestion buttons tailored to the current company context:
+### 3. Integrated Natural Language AI Chat (IDX + SGX)
+*   **In-Tooltip AI Screener**: Ask natural language questions about competitors, sectors, or rankings directly from the tooltip. Powered by the **Sectors Natural Language Company Screener API** — IDX uses `/v2/companies/`, SGX uses `/v2/sgx/companies/`.
+*   **Quick Prompt Chips**: Instant-click suggestion buttons tailored to the current company context (and exchange):
     *   *Sector Leaders* (returns industry peers with high market caps)
     *   *Value Peers* (filters same-sector companies with P/E < 15)
     *   *High Revenue Peers* (compares companies by revenue size)
     *   *Top Div Payers* (lists top dividend-yielding companies in the sector)
 *   **Explore Related Topics**: Dynamically suggests clickable follow-up queries based on search results for deeper, guided interactive screening.
 
-### 4. Insider Transaction Filings (IDX Only)
-*   **Direct Visibility**: Access the 5 most recent insider filings instantly, displaying transaction types (BUY/SELL badge), transaction date, the insider holder's name, share amount, purchase price, and total transaction value.
+### 4. Insider Transaction Filings (IDX + SGX)
+*   **Direct Visibility**: Access the 5 most recent insider filings instantly, displaying transaction types (BUY/SELL badge), transaction date, the insider holder's name, share amount, purchase price, and total transaction value. SGX filings are fetched from `/v2/sgx/filings/`; IDX filings from `/v2/filings/`. The renderer is exchange-agnostic — SGX's `price_per_share` field is normalised to the shared `price` field used throughout the UI.
 
 ### 5. Automated Whitelist Maintenance Pipeline
 *   **GitHub Actions Workflow**: A scheduled workflow (`.github/workflows/update_company_list.yml`) runs every 2 weeks or on manual trigger to execute a Python compiler (`github_workflow/update_active_company_list.py`).
