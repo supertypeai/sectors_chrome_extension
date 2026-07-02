@@ -1,6 +1,7 @@
 // options.js — Settings page logic
 
 const API_BASE = "https://api.sectors.app/v2";
+const CLIENT_SOURCE_HEADERS = { "X-Client-Source": "CHROME" };
 
 // ── Sidebar navigation ────────────────────────────────────────────────────
 document.querySelectorAll(".nav-item").forEach((item) => {
@@ -115,7 +116,7 @@ document.getElementById("btn-test").addEventListener("click", async () => {
 
   try {
     const res = await fetch(testUrl, {
-      headers: { Authorization: key },
+      headers: { Authorization: key, ...CLIENT_SOURCE_HEADERS },
     });
 
     if (res.ok) {

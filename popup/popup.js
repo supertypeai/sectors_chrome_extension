@@ -1,5 +1,6 @@
 // popup.js
 const API_BASE = "https://api.sectors.app/v2";
+const CLIENT_SOURCE_HEADERS = { "X-Client-Source": "CHROME" };
 
 // ── DOM refs ──────────────────────────────────────────────────────────────
 const keyStatusEl   = document.getElementById("key-status");
@@ -318,7 +319,7 @@ function normaliseFilings(filingsPayload, isSgx) {
 
 // ── Utils ─────────────────────────────────────────────────────────────────
 async function fetchJson(url, apiKey) {
-  const res = await fetch(url, { headers: { Authorization: apiKey } });
+  const res = await fetch(url, { headers: { Authorization: apiKey, ...CLIENT_SOURCE_HEADERS } });
   if (!res.ok) {
     let errorMsg = `HTTP ${res.status}`;
     try {

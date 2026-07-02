@@ -2,6 +2,7 @@
 // Handles Sectors API requests from the content script
 
 const API_BASE = "https://api.sectors.app/v2";
+const CLIENT_SOURCE_HEADERS = { "X-Client-Source": "CHROME" };
 
 // URL to pull the active companies ticker list
 const TICKERS_LIST_URL = "https://raw.githubusercontent.com/supertypeai/sectors_chrome_extension/main/active_companies.json";
@@ -27,7 +28,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 async function syncTickers() {
   try {
-    const res = await fetch(TICKERS_LIST_URL);
+    const res = await fetch(TICKERS_LIST_URL, { headers: CLIENT_SOURCE_HEADERS });
     if (!res.ok) return;
     const data = await res.json();
     
@@ -157,7 +158,7 @@ function normaliseFilings(filingsPayload, isSgx) {
 
 async function fetchJson(url, apiKey) {
   const res = await fetch(url, {
-    headers: { Authorization: apiKey },
+    headers: { Authorization: apiKey, ...CLIENT_SOURCE_HEADERS },
   });
 
   if (!res.ok) {

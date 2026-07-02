@@ -1,4 +1,4 @@
-# Sectors Ticker Lens (v1.1.1)
+# Sectors Ticker Lens (v1.1.2)
 
 A high-performance Chrome extension that surfaces real-time financial data, valuation metrics, insider trading filings, and natural language AI screening when you hover over stock symbols on any webpage. Fully optimized for both Indonesian (IDX) and Singaporean (SGX) financial markets.
 
