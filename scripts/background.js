@@ -82,7 +82,7 @@ async function handleAiSearch(query, sendResponse, isSgx = false) {
       : `${API_BASE}/companies/?q=${encodeURIComponent(query)}`;
 
     const data = await fetchJson(url, apiKey);
-    sendResponse({ results: data.results || [] });
+    sendResponse({ results: data.results || [], pagination: data.pagination, llm_translation: data.llm_translation });
   } catch (err) {
     sendResponse({ error: err.message });
   }

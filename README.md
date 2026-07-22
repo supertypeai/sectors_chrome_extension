@@ -1,12 +1,12 @@
-# Sectors Ticker Lens (v1.1.2)
+# Sectors Ticker Lens (v1.1.3)
 
-A high-performance Chrome extension that surfaces real-time financial data, valuation metrics, insider trading filings, and natural language AI screening when you hover over stock symbols on any webpage. Fully optimized for both Indonesian (IDX) and Singaporean (SGX) financial markets.
+A high-performance Chrome extension that surfaces real-time financial data, valuation metrics, insider trading filings, and natural language AI screening when you hover over stock symbols on any webpage. Fully optimized for both Indonesian (IDX) and Singaporean (SGX) financial markets. Every major data section is collapsed by default so nothing is shown all at once — click to expand.
 
 ---
 
 ## Key Features
 
-### 1. High-Performance Smart Hover Lens (Glassmorphic Tooltip)
+### 1. High-Performance Smart Hover Lens
 *   **Dual-Exchange Coverage**: Seamless support for both **Indonesia Stock Exchange (IDX)** and **Singapore Exchange (SGX)** symbols (e.g. `BBCA`, `TLKM.JK`, `D05`, `U11.SI`).
 *   **Instant Market Insights**: Displays clean, beautiful, high-fidelity real-time stock prices, 1-day closing percentage trends (color-coded for positive/negative movement), and a modern grid of core financial metrics:
     *   **Market Capitalization** (in native currency: IDR or SGD)
@@ -15,13 +15,31 @@ A high-performance Chrome extension that surfaces real-time financial data, valu
     *   **Dividend Yield** (TTM)
 *   **Company Overview**: Generates a natural-sounding, concise AI quick summary of the company's business model, industry sector, and market context on load.
 
-### 2. Intelligent Gatekeeper Logic (Performance First)
+### 2. Collapsible Data Sections — All API Fields Surfaced
+Every collapsible section is wrapped in a native `<details>` element (collapsed by default).
+
+**IDX sections:** Overview • Valuation • Peers • Financials • Management • Future • Dividend • Ownership (+ Scoring + Peer Group)
+**SGX sections:** Overview • Financials • Valuation • Dividends
+
+*   **Overview** — Address, phone, email, website, listing date, employees, market-cap rank, ESG score, indices, affiliates, tags, and all-time price range (52W/YTD/90D/AT highs & lows).
+*   **Valuation** — Forward P/E, intrinsic value, historical valuation table (P/E, P/B, P/S, PCF, PEG, EV/EBITDA, EV/Rev, peer averages).
+*   **Financials** — EPS, YoY quarterly growth, historical EPS table, historical financials table (revenue, earnings, EBITDA, total assets, equity, debt, free/op CF), financial ratios table (ROA, ROE, debt/asset, debt/equity, net margin, NIM, cost/income, asset turnover, CASA, L/D ratio). For SGX banks: full income statement / balance sheet / cash flow deep-dive with interest income breakdown, operating expense breakdown, customer breakdown, and loans by economic sector.
+*   **Dividend Detail** — TTM, forward yield, payout ratio, 5Y avg yield, growth rate, 10-year dividend history table, upcoming dividends.
+*   **Forecasts & Analyst Ratings** (IDX) — EPS/revenue estimates, actual 2025 data, growth forecasts, analyst breakdown (strong buy / buy / hold / sell / strong sell).
+*   **Management** (IDX) — Key executives with positions, executive shareholdings.
+*   **Ownership** (IDX) — Major shareholders table, whale investors, conglomerate groups, top buyers/sellers, institutional transaction flow.
+*   **Scoring** (IDX) — Point summaries across categories (value, growth, profitability, etc.).
+*   **Peers Comparison** — Peer companies with P/E, P/B, and market cap.
+
+### 3. Intelligent Gatekeeper Logic (Performance First)
 *   **O(1) Memory Lookups**: The extension loads pre-compiled, optimized whitelists (`validIdxTickers` and `validSgxTickers`) into local memory `Set` structures.
 *   **Zero-Lag DOM Walking**: Uses an advanced regex check to identify candidate strings, and immediately verifies them against the whitelist in **O(1)** time *before* performing expensive DOM layout calculations (`document.createRange()`, `getClientRects()`) or making API requests. This eliminates browser lag on text-heavy pages and prevents false-positive API spam.
 *   **LRU Caching Layer**: Implements a client-side Least Recently Used (LRU) cache in local storage (up to 10 ticker records, valid for 1 hour) to make subsequent hovers completely instantaneous and reduce server load.
 
-### 3. Integrated Natural Language AI Chat (IDX + SGX)
+### 4. Integrated Natural Language AI Chat (IDX + SGX)
 *   **In-Tooltip AI Screener**: Ask natural language questions about competitors, sectors, or rankings directly from the tooltip. Powered by the **Sectors Natural Language Company Screener API** — IDX uses `/v2/companies/`, SGX uses `/v2/sgx/companies/`.
+*   **Show More Pattern**: Results are paginated 10 at a time. When the API returns 50 results, the first 10 render inline; a "Show 40 more results" `<details>` toggle reveals the rest in a scrollable body.
+*   **Friendly Error Messages**: API errors (untranslatable queries, rate limits, exhausted keys) are translated into actionable, user-facing messages instead of raw API codes.
 *   **Quick Prompt Chips**: Instant-click suggestion buttons tailored to the current company context (and exchange):
     *   *Sector Leaders* (returns industry peers with high market caps)
     *   *Value Peers* (filters same-sector companies with P/E < 15)
@@ -29,18 +47,21 @@ A high-performance Chrome extension that surfaces real-time financial data, valu
     *   *Top Div Payers* (lists top dividend-yielding companies in the sector)
 *   **Explore Related Topics**: Dynamically suggests clickable follow-up queries based on search results for deeper, guided interactive screening.
 
-### 4. Insider Transaction Filings (IDX + SGX)
+### 5. Insider Transaction Filings (IDX + SGX)
 *   **Direct Visibility**: Access the 5 most recent insider filings instantly, displaying transaction types (BUY/SELL badge), transaction date, the insider holder's name, share amount, purchase price, and total transaction value. SGX filings are fetched from `/v2/sgx/filings/`; IDX filings from `/v2/filings/`. The renderer is exchange-agnostic — SGX's `price_per_share` field is normalised to the shared `price` field used throughout the UI.
+*   **Expandable Filing Details**: Each filing card has a native `<details>` "Details" toggle revealing holder type, holding before/after, share percentage before/after/transaction, sector, sub-sector, tags, source link, and a price transaction table — all in a scrollable body with custom-styled scrollbars.
+*   **XSS-Safe Rendering**: All API-sourced text is escaped before innerHTML injection; the AI "Show more" uses a DOM API `<details>` element to avoid marker round-trips.
 
-### 5. Automated Whitelist Maintenance Pipeline
+### 6. Automated Whitelist Maintenance Pipeline
 *   **GitHub Actions Workflow**: A scheduled workflow (`.github/workflows/update_company_list.yml`) runs every 2 weeks or on manual trigger to execute a Python compiler (`github_workflow/update_active_company_list.py`).
 *   **Supabase Database Sync**: The Python script queries live Supabase tables (`idx_active_company_profile` and `sgx_company_report`), normalizes suffixes (`.JK` and `.SI`), sorts alphabetically, and compiles the result into a minified, ultra-efficient `active_companies.json` file.
 *   **Background Synchronizer**: The extension background worker (`scripts/background.js`) runs a weekly Chrome Alarm (`syncTickersAlarm`) to pull the latest minified whitelist directly from the GitHub repository, keeping the local gatekeeper whitelists perfectly updated.
 
-### 6. Universal Personalization & Styling Control
+### 7. Universal Personalization & Styling Control
 *   **Midnight Dark vs. Sectors Light Mode**: Fully-integrated light and dark themes spanning across the hover tooltip, settings panel, and toolbar popup. Auto-applied using high-performance CSS custom variables (`styles/vars.css`) and a theme pre-checker (`scripts/theme-check.js`) to prevent styling flash on load.
 *   **Customisable Hover Delay**: Adjust the debounce interval (from 50ms to 600ms) to fine-tune hover responsiveness to your browsing style.
 *   **Interactive Settings Onboarding**: An interactive 3-step walk-through tour guides new users through setting up their API key, verifying the connection, and unlocking the hover lens on the very first install.
+
 
 ---
 
@@ -61,17 +82,18 @@ The project has been modularized and restructured into a highly readable, clean 
 │   └── options.js                    # Logic for connection testing, preferences, and onboarding tour
 ├── popup/                            # Toolbar Quick Action
 │   ├── popup.html                    # Manually search tickers and toggle settings on the fly
-│   ├── popup.css                     # Popup styling
+│   ├── popup.css                     # Popup styling (collapsible sections, global scrollbar)
 │   └── popup.js                      # Companion settings synchronization & lookup logic
 ├── scripts/
 │   ├── background.js                 # Service worker orchestrating secure API calls and weekly whitelist sync
-│   ├── content.js                    # Injected script handling gatekeeper whitelists and hover tooltips
+│   ├── content.js                    # Injected script handling gatekeeper whitelists, hover tooltips, section builders
 │   └── theme-check.js                # Theme pre-loading utility to prevent visual flash
 ├── styles/
 │   ├── vars.css                      # Centralized HSL design tokens & dark/light theme properties
-│   └── tooltip.css                   # Premium CSS, glassmorphic layout, and micro-animations
+│   └── tooltip.css                   # Premium CSS, collapsible details, glassmorphic layout, micro-animations
+├── .gitignore                        # Ignores .codegraph/ build artifacts
 ├── active_companies.json             # Pre-compiled, sorted minified whitelist of active companies
-├── manifest.json                     # Extension manifest configuration & permissions
+├── manifest.json                     # Extension manifest configuration & permissions (v1.1.3)
 └── README.md                         # Project documentation
 ```
 

@@ -151,9 +151,11 @@ function showTestResult(msg, ok) {
   el.textContent = msg;
 }
 
-// ── Preferences ───────────────────────────────────────────────────────────
-const delaySlider = document.getElementById("pref-delay");
-const delayVal    = document.getElementById("delay-val");
+// ── Preferences — auto-save (mirrors popup behaviour, stays in sync) ───
+const delaySlider       = document.getElementById("pref-delay");
+const delayVal          = document.getElementById("delay-val");
+const prefEnabledToggle = document.getElementById("pref-enabled");
+const themeToggle       = document.getElementById("pref-theme-toggle");
 
 delaySlider.addEventListener("input", () => {
   delayVal.textContent = `${delaySlider.value} ms`;
@@ -168,18 +170,34 @@ function updateSliderGradient(el) {
   el.style.backgroundSize = percentage + "% 100%";
 }
 
-document.getElementById("btn-save-prefs").addEventListener("click", () => {
-  const isDark = document.getElementById("pref-theme-toggle").checked;
-  const theme = isDark ? "dark" : "light";
-  const prefs = {
-    prefEnabled: document.getElementById("pref-enabled").checked,
-    prefDelay:   parseInt(delaySlider.value, 10),
-    prefTheme:   theme,
-  };
-  chrome.storage.sync.set(prefs, () => {
-    applyTheme(theme);
-    showSaveMsg("prefs-msg", "Preferences saved!", true);
-  });
+// Auto-save on change so popup/background always read the latest value
+prefEnabledToggle.addEventListener("change", () => {
+  chrome.storage.sync.set({ prefEnabled: prefEnabledToggle.checked });
+});
+
+themeToggle.addEventListener("change", () => {
+  const theme = themeToggle.checked ? "dark" : "light";
+  applyTheme(theme);
+  chrome.storage.sync.set({ prefTheme: theme });
+});
+
+delaySlider.addEventListener("change", () => {
+  chrome.storage.sync.set({ prefDelay: parseInt(delaySlider.value, 10) });
+});
+
+// React to changes from popup/background/other tabs in real time
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "sync") return;
+  if (changes.prefEnabled) prefEnabledToggle.checked = changes.prefEnabled.newValue;
+  if (changes.prefDelay) {
+    delaySlider.value = changes.prefDelay.newValue;
+    delayVal.textContent = `${changes.prefDelay.newValue} ms`;
+    updateSliderGradient(delaySlider);
+  }
+  if (changes.prefTheme) {
+    themeToggle.checked = changes.prefTheme.newValue === "dark";
+    applyTheme(changes.prefTheme.newValue);
+  }
 });
 
 function applyTheme(theme) {
