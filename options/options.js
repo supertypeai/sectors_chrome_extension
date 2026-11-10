@@ -1,7 +1,6 @@
 // options.js — Settings page logic
 
-const API_BASE = "https://api.sectors.app/v2";
-const CLIENT_SOURCE_HEADERS = { "X-Client-Source": "CHROME" };
+const { API_BASE, requestJson } = globalThis.SectorsApi;
 
 // ── Sidebar navigation ────────────────────────────────────────────────────
 document.querySelectorAll(".nav-item").forEach((item) => {
@@ -102,7 +101,7 @@ document.getElementById("btn-test").addEventListener("click", async () => {
     showTestResult("Please enter an API key first.", false);
     return;
   }
-  if (!testTicker || testTicker.length < 2) {
+  if (!testTicker || !/^[A-Z0-9]{2,10}$/.test(testTicker)) {
     showTestResult("Please enter a valid ticker.", false);
     return;
   }
@@ -110,17 +109,15 @@ document.getElementById("btn-test").addEventListener("click", async () => {
   showTestResult("Testing connection...", null);
 
   // Route IDX → /v2/filings/, SGX → /v2/sgx/filings/ based on the ticker's suffix
+  const testSymbol = encodeURIComponent(testTicker);
   const testUrl = isSgxTest
-    ? `${API_BASE}/sgx/filings/?symbol=${testTicker}&limit=1`
-    : `${API_BASE}/filings/?symbol=${testTicker}&limit=1`;
+    ? `${API_BASE}/sgx/filings/?symbol=${testSymbol}&limit=1`
+    : `${API_BASE}/filings/?symbol=${testSymbol}&limit=1`;
 
   try {
-    const res = await fetch(testUrl, {
-      headers: { Authorization: key, ...CLIENT_SOURCE_HEADERS },
-    });
+    const { ok, status, data, text } = await requestJson(testUrl, key);
 
-    if (res.ok) {
-      const data = await res.json();
+    if (ok) {
       const count = data?.pagination?.total_count ?? "?";
       
       // Auto-save the key if it works
@@ -131,12 +128,13 @@ document.getElementById("btn-test").addEventListener("click", async () => {
         );
         showSaveMsg("save-msg", "API key saved!", true);
       });
-    } else if (res.status === 403) {
+    } else if (status === 403) {
       showTestResult(`API key exhausted (HTTP 403). Please upgrade at sectors.app/api`, false);
-    } else if (res.status === 401) {
+    } else if (status === 401) {
       showTestResult(`Unauthorised (HTTP 401). Check that your API key is correct.`, false);
     } else {
-      showTestResult(`HTTP ${res.status} — ${(await res.text()).slice(0, 100)}`, false);
+      const detail = data?.message || data?.error || text || "";
+      showTestResult(`HTTP ${status}${detail ? ` — ${String(detail).slice(0, 100)}` : ""}`, false);
     }
   } catch (err) {
     showTestResult(`Network error: ${err.message}`, false);

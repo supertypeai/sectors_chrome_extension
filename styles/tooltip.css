@@ -1,13 +1,12 @@
 /* tooltip.css — Sectors.app Design System */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 /*
   ══════════════════════════════════════════════
   TYPOGRAPHY SYSTEM — 3 levels only
   ──────────────────────────────────────────────
-  L1 · Label   10px / 700 / UPPERCASE / ls 0.1em
-  L2 · Body    13px / 400–600 / normal
-  L3 · Hero    22px / 800 / tight tracking
+  L1 · Label   text-2xs / 700 / UPPERCASE / ls 0.1em
+  L2 · Body    text-body / 400–600 / normal
+  L3 · Hero    text-h1 / 800 / tight tracking
 
   COLOR SYSTEM — 2 colors only
   ──────────────────────────────────────────────
@@ -27,13 +26,26 @@
   --st-card-bg:     var(--card);
   --st-border-clr:  var(--border);
   --st-muted-fg:    var(--muted-foreground);
-  --st-primary-clr: var(--primary);
+  --st-primary-clr: var(--brand);
+  --st-primary-fg:  var(--brand-foreground);
 
-  /* Fancy gradient (submit button only) */
-  --st-fancy-grad: linear-gradient(90.68deg, #df9439 0.26%, #e5337e 102.37%);
+  /* Foundations semantic roles */
+  --st-brand:       var(--brand);
+  --st-brand-ink:   var(--brand-ink);
+  --st-success:     var(--success);
+  --st-success-ink: var(--success-ink);
+  --st-warn:        var(--warn);
+  --st-warn-ink:    var(--warn-ink);
+  --st-info:        var(--info);
+  --st-info-ink:    var(--info-ink);
+  --st-danger:      var(--danger);
+  --st-flow-pos:    var(--flow-pos);
+  --st-flow-neg:    var(--flow-neg);
+  --st-radius:      var(--radius);
   --st-easing: cubic-bezier(0.405, 0, 0.025, 1);
 
   all: initial;
+  color-scheme: dark;
   position: absolute;
   z-index: 2147483647;
   width: 380px;
@@ -42,18 +54,17 @@
   background: hsl(var(--st-bg));
   color: hsl(var(--st-fg));
   border: 1px solid hsl(var(--st-border-clr));
-  border-radius: 12px;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8);
-  font-family: 'Inter', -apple-system, sans-serif;
-  font-size: 13px;          /* L2 base */
-  line-height: 1.5;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--st-shadow);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);          /* L2 base */
+  line-height: var(--text-body--line-height);
   opacity: 0;
   transform: translateY(8px) scale(0.98);
   transition: opacity 0.2s var(--st-easing), transform 0.2s var(--st-easing);
   pointer-events: none;
   display: none;
   scrollbar-width: none;
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11"; /* Inter refinements */
 }
 
 /* Consistent scrollbar for all scrollable areas */
@@ -82,7 +93,8 @@
 
 /* L1: Label  - 10px / 700 / UPPERCASE / ls 0.1em */
 .st-label-l1 {
-  font-size: 10px;
+  font-size: var(--text-2xs);
+  line-height: var(--text-2xs--line-height);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -91,23 +103,23 @@
 
 /* L2: Body   - 13px / 400–600 / normal */
 .st-body-l2 {
-  font-size: 13px;
+  font-size: var(--text-body);
   font-weight: 400;
-  line-height: 1.5;
+  line-height: var(--text-body--line-height);
   color: hsl(var(--st-fg));
 }
 
 /* L3: Hero   - 22px / 800 / tight tracking */
 .st-hero-l3 {
-  font-size: 22px;
-  font-weight: 800;
+  font-size: var(--text-h1);
+  font-weight: var(--heading-weight);
   letter-spacing: -0.03em;
-  line-height: 1.1;
+  line-height: var(--text-h1--line-height);
   color: hsl(var(--st-fg));
 }
 
 #sectors-tooltip.light {
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--st-shadow);
 }
 
 #sectors-tooltip::-webkit-scrollbar { 
@@ -117,11 +129,11 @@
   background: transparent;
 }
 #sectors-tooltip::-webkit-scrollbar-thumb {
-  background: hsla(var(--st-muted-fg), 0.25);
+  background: hsl(var(--st-muted-fg) / 0.25);
   border-radius: 10px;
 }
 #sectors-tooltip::-webkit-scrollbar-thumb:hover {
-  background: hsla(var(--st-muted-fg), 0.45);
+  background: hsl(var(--st-muted-fg) / 0.45);
 }
 
 #sectors-tooltip.st-visible {
@@ -157,9 +169,18 @@
   object-fit: contain;
 }
 
+#sectors-tooltip .st-sector-icon {
+  height: 18px;
+  width: 18px;
+  display: none;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
 /* L2 — "Sectors" wordmark */
 #sectors-tooltip .st-brand-name {
-  font-size: 13px;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   font-weight: 600;
   color: hsl(var(--st-fg));
   letter-spacing: -0.01em;
@@ -167,11 +188,12 @@
 
 /* L1 — Ticker badge / "pgeo badge" style */
 #sectors-tooltip .st-ticker-badge {
-  font-size: 10px;
-  font-weight: 900;
+  font-size: var(--text-3xs);
+  line-height: var(--text-3xs--line-height);
+  font-weight: 700;
   padding: 4px 10px;
   background: hsl(var(--st-primary-clr)); /* Spectral Ruby */
-  color: #fff; /* High contrast */
+  color: hsl(var(--st-primary-fg)); /* High contrast */
   border-radius: 4px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -189,7 +211,8 @@
 /* L1 label */
 #sectors-tooltip .st-ai-label {
   display: block;
-  font-size: 10px;
+  font-size: var(--text-3xs);
+  line-height: var(--text-3xs--line-height);
   font-weight: 700;
   color: hsl(var(--st-muted-fg));
   text-transform: uppercase;
@@ -199,8 +222,8 @@
 
 /* L2 body */
 #sectors-tooltip .st-ai-text {
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   color: hsl(var(--st-muted-fg));
 }
 
@@ -217,13 +240,13 @@
 
 /* L3 — Hero company name */
 #sectors-tooltip .st-company-name-large {
-  font-size: 24px;
-  font-weight: 800;
+  font-size: var(--text-h1);
+  font-weight: var(--heading-weight);
   color: hsl(var(--st-fg));
   margin-bottom: 4px;
   padding-left: 4px; /* Align with card content */
   letter-spacing: -0.02em;
-  line-height: 1.1;
+  line-height: var(--text-h1--line-height);
 }
 
 #sectors-tooltip .st-meta-row {
@@ -235,7 +258,8 @@
 }
 
 #sectors-tooltip .st-tag {
-  font-size: 10px;
+  font-size: var(--text-3xs);
+  line-height: var(--text-3xs--line-height);
   font-weight: 700;
   padding: 2px 8px;
   background: transparent;
@@ -256,16 +280,18 @@
 
 /* L3 — price value */
 #sectors-tooltip .st-price-val {
-  font-size: 24px;
-  font-weight: 800;
+  font-size: var(--text-h1);
+  font-weight: var(--heading-weight);
   color: hsl(var(--st-fg));
   padding-left: 4px; /* Reduced bumper */
   letter-spacing: -0.04em;
+  line-height: var(--text-h1--line-height);
 }
 
 /* L2 — price change pill */
 #sectors-tooltip .st-price-change {
-  font-size: 12px;
+  font-size: var(--text-2xs);
+  line-height: var(--text-2xs--line-height);
   font-weight: 600;
   padding: 2px 6px;
   border-radius: 4px;
@@ -274,11 +300,11 @@
 /* Positive / Negative — Backgrounds for state, but TEXT remains within 2-color system */
 #sectors-tooltip .st-positive {
   color: hsl(var(--st-fg));
-  background: hsla(var(--spectral7), 0.2); /* Muted green bg */
+  background: hsl(var(--st-flow-pos) / 0.18); /* Muted green bg */
 }
 #sectors-tooltip .st-negative {
   color: hsl(var(--st-fg));
-  background: hsla(var(--spectral2), 0.2); /* Muted red bg */
+  background: hsl(var(--st-flow-neg) / 0.18); /* Muted red bg */
 }
 
 /* Metric grid */
@@ -298,7 +324,8 @@
 /* L1 — metric label */
 #sectors-tooltip .st-metric-k {
   display: block;
-  font-size: 10px;
+  font-size: var(--text-3xs);
+  line-height: var(--text-3xs--line-height);
   color: hsl(var(--st-muted-fg));
   font-weight: 700;
   text-transform: uppercase;
@@ -308,7 +335,8 @@
 
 /* L2 — metric value */
 #sectors-tooltip .st-metric-v {
-  font-size: 14px;
+  font-size: var(--text-h4);
+  line-height: var(--text-h4--line-height);
   font-weight: 600;
   color: hsl(var(--st-fg));
 }
@@ -324,7 +352,8 @@
 
 #sectors-tooltip details summary {
   padding: 10px 12px;
-  font-size: 10px;
+  font-size: var(--text-3xs);
+  line-height: var(--text-3xs--line-height);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -343,13 +372,18 @@
 }
 
 #sectors-tooltip details summary::after {
-  content: "▸";
-  font-size: 12px;
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
   transition: transform 0.2s var(--st-easing);
 }
 
 #sectors-tooltip details[open] summary::after {
-  transform: rotate(90deg);
+  transform: rotate(45deg);
 }
 
 #sectors-tooltip details summary:hover {
@@ -358,8 +392,8 @@
 
 #sectors-tooltip details .st-detail-body {
   padding: 0 12px 12px;
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   color: hsl(var(--st-muted-fg));
 }
 
@@ -373,7 +407,7 @@
   display: flex;
   justify-content: space-between;
   padding: 3px 0;
-  border-bottom: 1px solid hsla(var(--st-border-clr), 0.5);
+  border-bottom: 1px solid hsl(var(--st-border-clr) / 0.5);
 }
 
 #sectors-tooltip .st-kv-row:last-child {
@@ -381,27 +415,37 @@
 }
 
 #sectors-tooltip .st-kv-label {
-  font-size: 11px;
+  font-size: var(--text-2xs);
+  line-height: var(--text-2xs--line-height);
   color: hsl(var(--st-muted-fg));
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 #sectors-tooltip .st-kv-value {
-  font-size: 11px;
+  font-size: var(--text-2xs);
+  line-height: var(--text-2xs--line-height);
   color: hsl(var(--st-fg));
   font-weight: 600;
   text-align: right;
 }
 
+#sectors-tooltip .st-mgmt-meta {
+  color: hsl(var(--st-muted-fg));
+  font-weight: 400;
+}
+
 /* Sub-header inside details */
 #sectors-tooltip .st-sub-head {
-  font-size: 10px;
+  font-size: var(--text-3xs);
+  line-height: var(--text-3xs--line-height);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: hsl(var(--st-muted-fg));
   padding: 8px 0 4px;
-  border-top: 1px solid hsla(var(--st-border-clr), 0.5);
+  border-top: 1px solid hsl(var(--st-border-clr) / 0.5);
   margin-top: 4px;
 }
 
@@ -414,14 +458,15 @@
 #sectors-tooltip .st-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 10px;
-  line-height: 1.4;
+  font-size: var(--text-3xs);
+  line-height: var(--text-3xs--line-height);
 }
 
 #sectors-tooltip .st-table th {
   text-align: left;
   font-weight: 700;
-  font-size: 9px;
+  font-size: var(--text-3xs);
+  line-height: var(--text-3xs--line-height);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: hsl(var(--st-muted-fg));
@@ -434,7 +479,7 @@
   padding: 3px 6px;
   color: hsl(var(--st-fg));
   white-space: nowrap;
-  border-bottom: 1px solid hsla(var(--st-border-clr), 0.3);
+  border-bottom: 1px solid hsl(var(--st-border-clr) / 0.3);
 }
 
 #sectors-tooltip .st-table tr:last-child td {
@@ -444,7 +489,8 @@
 /* ── Section Title ── */
 /* L1 Label style */
 #sectors-tooltip .st-section-title {
-  font-size: 10px;
+  font-size: var(--text-3xs);
+  line-height: var(--text-3xs--line-height);
   font-weight: 700;
   color: hsl(var(--st-muted-fg));
   letter-spacing: 0.12em;
@@ -470,33 +516,35 @@
 
 /* L1 — BUY / SELL badge — positive/negative only */
 #sectors-tooltip .st-tx-badge {
-  font-size: 10px;
+  font-size: var(--text-3xs);
+  line-height: var(--text-3xs--line-height);
   font-weight: 700;
   padding: 2px 7px;
   border-radius: 5px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.02em;
 }
 
 #sectors-tooltip .st-buy {
-  background: hsla(var(--spectral7), 0.2);
+  background: hsl(var(--spectral7) / 0.2);
   color: hsl(var(--st-fg));
 }
 
 #sectors-tooltip .st-sell {
-  background: hsla(var(--spectral2), 0.2);
+  background: hsl(var(--spectral2) / 0.2);
   color: hsl(var(--st-fg));
 }
 
 /* L2 muted */
 #sectors-tooltip .st-filing-date {
-  font-size: 12px;
+  font-size: var(--text-2xs);
+  line-height: var(--text-2xs--line-height);
   color: hsl(var(--st-muted-fg));
 }
 
 /* L2 primary */
 #sectors-tooltip .st-filing-holder {
-  font-size: 13px;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   font-weight: 600;
   color: hsl(var(--st-fg));
   margin-bottom: 4px;
@@ -506,7 +554,8 @@
 #sectors-tooltip .st-filing-detail {
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: var(--text-2xs);
+  line-height: var(--text-2xs--line-height);
   color: hsl(var(--st-muted-fg));
 }
 
@@ -518,20 +567,30 @@
 
 /* Filings collapsible details */
 #sectors-tooltip .st-filing-expandable {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid hsla(var(--st-border-clr), 0.5);
+  margin: 8px 0 0;
+  padding: 8px 0 0;
+  border: 0;
+  border-top: 1px solid hsl(var(--st-border-clr) / 0.5);
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
 }
 
 #sectors-tooltip .st-filing-expandable summary {
-  font-size: 11px;
-  font-weight: 600;
-  color: hsl(var(--st-fg));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 4px 0;
+  font-size: var(--text-2xs);
+  line-height: var(--text-2xs--line-height);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: hsl(var(--st-muted-fg));
 }
 
 #sectors-tooltip .st-filing-expandable summary:hover {
-  color: hsl(var(--st-accent, var(--st-fg)));
+  color: hsl(var(--st-fg));
 }
 
 #sectors-tooltip .st-filing-expandable .st-detail-body {
@@ -539,6 +598,10 @@
   overflow-y: auto;
   padding: 8px 0 4px;
 }
+
+#sectors-tooltip .st-symbol { color: hsl(var(--st-muted-fg)); font-weight: 400; }
+#sectors-tooltip .st-peers-table { max-height: 260px; overflow-y: auto; }
+#sectors-tooltip .st-peers-table th { position: sticky; top: 0; background: hsl(var(--st-card-bg)); z-index: 1; }
 
 /* ── Chat Box ── */
 #sectors-tooltip .st-chat-box {
@@ -555,7 +618,7 @@
   gap: 10px;
   margin-bottom: 12px;
   scrollbar-width: thin;
-  scrollbar-color: hsla(var(--st-muted-fg), 0.25) transparent;
+  scrollbar-color: hsl(var(--st-muted-fg) / 0.25) transparent;
 }
 
 #sectors-tooltip .st-chat-history::-webkit-scrollbar {
@@ -565,19 +628,19 @@
   background: transparent;
 }
 #sectors-tooltip .st-chat-history::-webkit-scrollbar-thumb {
-  background: hsla(var(--st-muted-fg), 0.25);
+  background: hsl(var(--st-muted-fg) / 0.25);
   border-radius: 10px;
 }
 #sectors-tooltip .st-chat-history::-webkit-scrollbar-thumb:hover {
-  background: hsla(var(--st-muted-fg), 0.45);
+  background: hsl(var(--st-muted-fg) / 0.45);
 }
 
 /* L2 — chat bubbles */
 #sectors-tooltip .st-bubble {
   padding: 9px 12px;
   border-radius: 10px;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
 }
 
 #sectors-tooltip .st-bubble-user {
@@ -606,8 +669,8 @@
 
 #sectors-tooltip .st-ai-more-body {
   padding: 10px 12px 12px;
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   color: hsl(var(--st-muted-fg));
   max-height: 320px;
   overflow-y: auto;
@@ -628,7 +691,8 @@
 
 /* L2 — suggestion chips */
 #sectors-tooltip .st-suggest-btn {
-  font-size: 11px;
+  font-size: var(--text-2xs);
+  line-height: var(--text-2xs--line-height);
   font-weight: 500;
   padding: 4px 9px;
   background: transparent;
@@ -660,7 +724,8 @@
   background: transparent;
   border: none;
   color: hsl(var(--st-fg));
-  font-size: 13px;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   outline: none;
   font-family: inherit;
 }
@@ -672,7 +737,7 @@
 /* Send button — Dark Red background, White icon for better contrast */
 #sectors-tooltip #st-btn-ask {
   background: hsl(var(--st-primary-clr)); /* Ruby */
-  color: #000; /* Black icon for high contrast */
+  color: hsl(var(--st-primary-fg)); /* High contrast icon */
   border: none;
   border-radius: 6px;
   width: 30px;
@@ -681,8 +746,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  font-weight: 900;
   transition: opacity 0.15s var(--st-easing);
 }
 
@@ -692,7 +755,8 @@
 
 /* Hint below input — muted body, no uppercase */
 #sectors-tooltip .st-chat-hint {
-  font-size: 11px;
+  font-size: var(--text-2xs);
+  line-height: var(--text-2xs--line-height);
   font-weight: 400;
   color: hsl(var(--st-muted-fg));
   margin-top: 8px;
@@ -709,7 +773,8 @@
 
 /* L1 */
 #sectors-tooltip .st-related-label {
-  font-size: 10px;
+  font-size: var(--text-3xs);
+  line-height: var(--text-3xs--line-height);
   font-weight: 700;
   color: hsl(var(--st-muted-fg));
   text-transform: uppercase;
@@ -728,7 +793,8 @@
   display: block;
   width: 100%;
   text-align: left;
-  font-size: 12px;
+  font-size: var(--text-2xs);
+  line-height: var(--text-2xs--line-height);
   font-weight: 500;
   color: hsl(var(--st-muted-fg));
   background: transparent;
@@ -756,7 +822,8 @@
 
 /* L2 — both footer links: same muted color, same weight */
 #sectors-tooltip .st-ext-link {
-  font-size: 12px;
+  font-size: var(--text-2xs);
+  line-height: var(--text-2xs--line-height);
   color: hsl(var(--st-muted-fg));
   text-decoration: none;
   font-weight: 500;
@@ -767,19 +834,19 @@
   color: hsl(var(--st-fg));
 }
 
-/* "Sectors AI Chat" — Own font, own spacing, prominent */
+/* "Sectors AI Chat" — own spacing, title case like other footer links */
 #sectors-tooltip .st-chat-link {
-  font-weight: 800;
+  font-weight: 700;
   color: hsl(var(--st-fg));
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-size: 11px;
+  font-size: var(--text-2xs);
+  line-height: var(--text-2xs--line-height);
 }
 
 /* ── Empty / Error States ── */
 /* L2 muted — no italic by default, but <em> allowed */
 #sectors-tooltip .st-dim {
-  font-size: 13px;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   color: hsl(var(--st-muted-fg));
   padding: 4px 14px 14px;
   display: block;
@@ -819,7 +886,8 @@
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   margin-top: 12px;
   transition: background 0.15s var(--st-easing);
   font-family: inherit;
@@ -838,7 +906,8 @@
   color: hsl(var(--st-fg));
   border-radius: 8px;
   text-decoration: none;
-  font-size: 13px;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   font-weight: 600;
   transition: background 0.15s var(--st-easing);
 }
@@ -858,13 +927,14 @@
   padding: 48px 20px;
   gap: 12px;
   color: hsl(var(--st-muted-fg));
-  font-size: 13px;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
 }
 
 #sectors-tooltip .st-spinner {
   width: 22px;
   height: 22px;
-  border: 2px solid hsla(var(--st-muted-fg), 0.2);
+  border: 2px solid hsl(var(--st-muted-fg) / 0.2);
   border-top-color: hsl(var(--st-muted-fg));
   border-radius: 50%;
   animation: st-spin 0.8s linear infinite;

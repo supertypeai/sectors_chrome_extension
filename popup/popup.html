@@ -1,12 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="sectors-ext">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sectors Ticker Lens</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles/fonts.css" />
   <link rel="stylesheet" href="../styles/vars.css" />
   <link rel="stylesheet" href="popup.css" />
   <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32x32.png" />
@@ -31,7 +29,7 @@
     <!-- API key status -->
     <div id="key-status" class="key-status key-missing hidden">
       <span class="key-status-icon"></span>
-      <span>No API key set</span>
+      <span>No API Key Set</span>
       <button class="btn-small" id="btn-set-key">Add Key</button>
     </div>
     <div id="key-ok" class="key-status key-set hidden">
@@ -48,6 +46,7 @@
           id="ticker-input"
           class="ticker-input"
           placeholder="e.g. BBCA, TLKM or D05.SI"
+          aria-label="Ticker to look up"
           maxlength="10"
           autocomplete="off"
           spellcheck="false"
@@ -66,7 +65,7 @@
       <div class="section-label">Personalization</div>
       <div class="pref-row">
         <div class="pref-info">
-          <div class="pref-name">Enable hover tooltip</div>
+          <div class="pref-name">Enable Hover Tooltip</div>
           <div class="pref-desc">Show popup when hovering tickers</div>
         </div>
         <label class="toggle-switch">
@@ -86,20 +85,21 @@
       </div>
       <div class="pref-row">
         <div class="pref-info">
-          <div class="pref-name">Hover delay</div>
+          <div class="pref-name">Hover Delay</div>
           <div class="pref-desc" id="delay-val">120 ms</div>
         </div>
-        <input type="range" id="pref-delay" min="50" max="600" step="50" value="120" class="pref-slider" />
+        <input type="range" id="pref-delay" min="50" max="600" step="50" value="120" aria-label="Hover delay" class="pref-slider" />
       </div>
     </div>
 
     <!-- Footer -->
     <div class="popup-footer">
       <span>Hover any ticker</span>
-      <a href="https://docs.sectors.app/" target="_blank" class="footer-link">API Docs</a>
+      <a href="https://docs.sectors.app/" target="_blank" rel="noopener noreferrer" class="footer-link">API Docs</a>
     </div>
   </div>
 
+  <script src="../scripts/render.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

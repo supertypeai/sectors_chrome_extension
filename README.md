@@ -1,4 +1,4 @@
-# Sectors Ticker Lens (v1.1.3)
+# Sectors Ticker Lens (v2.0)
 
 A high-performance Chrome extension that surfaces real-time financial data, valuation metrics, insider trading filings, and natural language AI screening when you hover over stock symbols on any webpage. Fully optimized for both Indonesian (IDX) and Singaporean (SGX) financial markets. Every major data section is collapsed by default so nothing is shown all at once — click to expand.
 
@@ -19,15 +19,15 @@ A high-performance Chrome extension that surfaces real-time financial data, valu
 Every collapsible section is wrapped in a native `<details>` element (collapsed by default).
 
 **IDX sections:** Overview • Valuation • Peers • Financials • Management • Future • Dividend • Ownership (+ Scoring + Peer Group)
-**SGX sections:** Overview • Financials • Valuation • Dividends
+**SGX sections:** Overview • Financials • Valuation • Dividends • Management • Ownership
 
 *   **Overview** — Address, phone, email, website, listing date, employees, market-cap rank, ESG score, indices, affiliates, tags, and all-time price range (52W/YTD/90D/AT highs & lows).
 *   **Valuation** — Forward P/E, intrinsic value, historical valuation table (P/E, P/B, P/S, PCF, PEG, EV/EBITDA, EV/Rev, peer averages).
 *   **Financials** — EPS, YoY quarterly growth, historical EPS table, historical financials table (revenue, earnings, EBITDA, total assets, equity, debt, free/op CF), financial ratios table (ROA, ROE, debt/asset, debt/equity, net margin, NIM, cost/income, asset turnover, CASA, L/D ratio). For SGX banks: full income statement / balance sheet / cash flow deep-dive with interest income breakdown, operating expense breakdown, customer breakdown, and loans by economic sector.
 *   **Dividend Detail** — TTM, forward yield, payout ratio, 5Y avg yield, growth rate, 10-year dividend history table, upcoming dividends.
 *   **Forecasts & Analyst Ratings** (IDX) — EPS/revenue estimates, actual 2025 data, growth forecasts, analyst breakdown (strong buy / buy / hold / sell / strong sell).
-*   **Management** (IDX) — Key executives with positions, executive shareholdings.
-*   **Ownership** (IDX) — Major shareholders table, whale investors, conglomerate groups, top buyers/sellers, institutional transaction flow.
+*   **Management** (IDX + SGX) — Key executives with positions. SGX adds age, appointment date, and former officers; IDX adds executive shareholdings.
+*   **Ownership** (IDX + SGX) — Major shareholders table. IDX adds whale investors, conglomerate groups, top buyers/sellers, and institutional transaction flow.
 *   **Scoring** (IDX) — Point summaries across categories (value, growth, profitability, etc.).
 *   **Peers Comparison** — Peer companies with P/E, P/B, and market cap.
 
@@ -55,7 +55,7 @@ Every collapsible section is wrapped in a native `<details>` element (collapsed 
 ### 6. Automated Whitelist Maintenance Pipeline
 *   **GitHub Actions Workflow**: A scheduled workflow (`.github/workflows/update_company_list.yml`) runs every 2 weeks or on manual trigger to execute a Python compiler (`github_workflow/update_active_company_list.py`).
 *   **Supabase Database Sync**: The Python script queries live Supabase tables (`idx_active_company_profile` and `sgx_company_report`), normalizes suffixes (`.JK` and `.SI`), sorts alphabetically, and compiles the result into a minified, ultra-efficient `active_companies.json` file.
-*   **Background Synchronizer**: The extension background worker (`scripts/background.js`) runs a weekly Chrome Alarm (`syncTickersAlarm`) to pull the latest minified whitelist directly from the GitHub repository, keeping the local gatekeeper whitelists perfectly updated.
+*   **Background Loader**: On install/startup the background worker refreshes the public whitelist from the project's GitHub repo into `chrome.storage.local`; if GitHub is unavailable it falls back to the bundled `active_companies.json`. No alarms or background timers are used.
 
 ### 7. Universal Personalization & Styling Control
 *   **Midnight Dark vs. Sectors Light Mode**: Fully-integrated light and dark themes spanning across the hover tooltip, settings panel, and toolbar popup. Auto-applied using high-performance CSS custom variables (`styles/vars.css`) and a theme pre-checker (`scripts/theme-check.js`) to prevent styling flash on load.
@@ -75,7 +75,7 @@ The project has been modularized and restructured into a highly readable, clean 
 ├── github_workflow/
 │   ├── github_workflow_requirements.txt
 │   └── update_active_company_list.py # Python script querying Supabase and generating minified JSON
-├── icons/                            # Professional PNG assets for branding
+├── icons/                            # Branding PNGs + sector SVGs (1:1 from sectors/public/sectors)
 ├── options/                          # Settings Dashboard
 │   ├── options.html                  # Dashboard HTML with API setup and preferences
 │   ├── options.css                   # Custom styles for Options page
@@ -85,15 +85,19 @@ The project has been modularized and restructured into a highly readable, clean 
 │   ├── popup.css                     # Popup styling (collapsible sections, global scrollbar)
 │   └── popup.js                      # Companion settings synchronization & lookup logic
 ├── scripts/
-│   ├── background.js                 # Service worker orchestrating secure API calls and weekly whitelist sync
+│   ├── api.js                        # Shared API base, headers, and request helper
+│   ├── background.js                 # Service worker orchestrating secure API calls and local whitelist load
+│   ├── render.js                     # Shared DOM-free report renderers (tooltip + popup)
 │   ├── content.js                    # Injected script handling gatekeeper whitelists, hover tooltips, section builders
 │   └── theme-check.js                # Theme pre-loading utility to prevent visual flash
+├── fonts/                            # Self-hosted Ubuntu Sans + Mono (variable woff2)
 ├── styles/
+│   ├── fonts.css                     # @font-face for the bundled Ubuntu Sans files
 │   ├── vars.css                      # Centralized HSL design tokens & dark/light theme properties
 │   └── tooltip.css                   # Premium CSS, collapsible details, glassmorphic layout, micro-animations
 ├── .gitignore                        # Ignores .codegraph/ build artifacts
-├── active_companies.json             # Pre-compiled, sorted minified whitelist of active companies
-├── manifest.json                     # Extension manifest configuration & permissions (v1.1.3)
+├── active_companies.json             # Bundled ticker whitelist (offline fallback; refreshed from GitHub on startup)
+├── manifest.json                     # Extension manifest configuration & permissions (v2.0)
 └── README.md                         # Project documentation
 ```
 
@@ -104,7 +108,7 @@ The project has been modularized and restructured into a highly readable, clean 
 ### 1. Load the Extension locally
 1.  Open Google Chrome and navigate to `chrome://extensions/`.
 2.  Enable **Developer mode** via the toggle switch in the top-right corner.
-3.  Click **Load unpacked** in the top-left and select the `browser_ext` folder of this project.
+3.  Click **Load unpacked** in the top-left and select the folder containing `manifest.json`.
 
 ### 2. Follow the First-Run Tour
 1.  On installation, the extension will automatically open the Settings tab and launch the interactive onboarding guide.
@@ -120,7 +124,10 @@ Hover over any stock symbol on a news site, blog, or financial forum (e.g. `TLKM
 ## Privacy & Permissions
 
 Built with Manifest V3 to ensure the highest standards of safety, privacy, and performance:
-*   **`storage`**: Used exclusively to secure and sync your API key and preferences across your Chrome profile.
-*   **`alarms`**: Establishes a weekly background alarm to sync the latest active company whitelist without background performance overhead.
-*   **Host Permissions (`https://api.sectors.app/*`, `https://raw.githubusercontent.com/*`)**: Allows secure, sandboxed network requests to Sectors API endpoints and updates the local ticker whitelists.
+*   **`storage`**: Stores your API key, preferences, a 1-hour company cache, and the bundled ticker whitelist. The API key is synced across your Chrome profile.
+*   **Host permissions (`https://api.sectors.app/*`, `https://raw.githubusercontent.com/supertypeai/sectors_chrome_extension/*`)**: The API host receives the hovered ticker symbol and any AI screener query. The GitHub host is used only to refresh the public ticker whitelist; no personal data is sent.
+*   **Bundled assets**: Sector SVGs and Ubuntu Sans fonts ship with the extension; there are no CDN or Google Fonts requests. The only GitHub request is the public ticker whitelist.
+*   **No page collection**: The content script runs on `http`/`https` pages but only reads the hovered element's text to detect a ticker. No page content, browsing history, cookies, or personal data is collected, stored, or sent anywhere. The API key is sent only to `api.sectors.app`.
 *   **Zero History Collection**: No browsing history, personal data, or cookies are ever tracked, logged, or sent to external services.
+
+See [PRIVACY.md](./PRIVACY.md) for the full disclosure.

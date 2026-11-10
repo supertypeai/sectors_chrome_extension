@@ -1,25 +1,55 @@
-:root {
-  /* Dark Mode Defaults (Midnight) */
-  --background: 20 14.3% 4.1%;
-  --foreground: 0 0% 95%;
-  --card: 24 9.8% 10%;
-  --card-foreground: 0 0% 95%;
-  --popover: 0 0% 9%;
-  --popover-foreground: 0 0% 95%;
-  --primary: 335 98.7% 31.2%;
-  --primary-foreground: 355.7 100% 97.3%;
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 0 0% 15%;
-  --muted-foreground: 240 5% 64.9%;
-  --accent: 12 6.5% 15.1%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 85.7% 97.3%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --ring: 346.8 77.2% 49.8%;
-  --radius: 12px;
+/* Scoped to extension pages (`.sectors-ext`) and the injected tooltip
+   (`#sectors-tooltip`) instead of `:root`, so the content-script stylesheet
+   never rewrites host-page custom properties. */
+.sectors-ext,
+#sectors-tooltip {
+  color-scheme: dark;
+
+  /* Dark theme = foundations `.dark` + Sectors overrides. HSL triples so every
+     call site can keep using hsl(var(--token)). */
+  --background: 30 10% 7%;
+  --foreground: 43 20% 92%;
+  --card: 30 8% 14%;
+  --card-foreground: 43 20% 92%;
+  --popover: 30 8% 14%;
+  --popover-foreground: 43 20% 92%;
+  --primary: 133 34% 34%;
+  --primary-foreground: var(--tint-foreground);
+  --primary-ink: 133 26% 76%;
+  --secondary: 14 64% 37%;
+  --secondary-foreground: 0 0% 100%;
+  --secondary-ink: 14 60% 66%;
+  --muted: 30 8% 18%;
+  --muted-foreground: 43 16% 80%;
+  --subtle-foreground: 43 10% 59%;
+  --accent: 133 12% 20%;
+  --accent-foreground: 133 18% 78%;
+  --destructive: 0 65% 68%;
+  --destructive-foreground: 30 10% 10%;
+  --border: 30 8% 26%;
+  --input: var(--border);
+  --ring: 133 18% 58%;
+
+  /* Status roles — the fill is a mark, the ink is words, the foreground is the
+     label printed on the fill. */
+  --tint-foreground: 0 0% 100%;
+  /* Neutral overlay for the onboarding spotlight; not a brand hue. */
+  --scrim: 0 0% 0%;
+  --success: 142 75% 29%;
+  --success-ink: 142 55% 58%;
+  --success-foreground: var(--tint-foreground);
+  --warn: 30 90% 55%;
+  --warn-ink: 33 60% 72%;
+  --warn-foreground: 30 25% 12%;
+  --info: 211 75% 60%;
+  --info-ink: 211 75% 64%;
+  --danger: 8 60% 64%;
+
+  /* Sectors identity: crimson brand on foundations' sage primary. */
+  --brand: 335 98.7% 31.2%;
+  --brand-ink: var(--spectral2);
+  --brand-foreground: var(--primary-foreground);
+  --logo-plate: 30 6% 84%;
 
   /* Spectral Palette */
   --spectral1: 335 98.7% 31.2%;
@@ -35,33 +65,128 @@
   --spectral11: 160 21.1% 42.7%;
   --spectral12: 276 33.3% 46.7%;
   --spectral13: 305 55.5% 24.7%;
+  --spectral14: 70 50% 33%;
 
-  /* Fancy Gradients */
-  --st-fancy-grad: linear-gradient(90.68deg, #df9439 0.26%, #e5337e 102.37%);
-  
+  /* Direction channels: the theme picks the spectral pair. */
+  --flow-pos: var(--spectral7);
+  --flow-neg: var(--spectral4);
+
+  /* Radius — Sectors pins the base to 0.4rem; every rung is additive off it. */
+  --radius: 0.4rem;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 2px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Type ramp — below Tailwind's 12px floor, plus the h1–h4 ladder. */
+  --text-3xs: 0.625rem;
+  --text-3xs--line-height: 1.3;
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1.35;
+  --text-h4: 0.875rem;
+  --text-h4--line-height: 1.35;
+  --text-h3: 1rem;
+  --text-h3--line-height: 1.3;
+  --text-h2: 1.125rem;
+  --text-h2--line-height: 1.25;
+  --text-h1: 1.375rem;
+  --text-h1--line-height: 1.2;
+  /* Dense body rung from the foundations docs (13px on the app surface). */
+  --text-body: 0.8125rem;
+  --text-body--line-height: 1.5;
+  --font-ubuntu-sans: "Sectors Ubuntu Sans";
+  --font-ubuntu-sans-mono: "Sectors Ubuntu Sans Mono";
+  --font-sans: var(--font-ubuntu-sans, ui-sans-serif), system-ui, sans-serif;
+  --font-mono: var(--font-ubuntu-sans-mono, ui-monospace), SFMono-Regular, monospace;
+  --font-heading: var(--font-sans);
+  --heading-weight: 680;
+
+  /* Elevation — only layers that leave the page plane cast a shadow. */
+  --elevation-raised:
+    0 1px 2px -1px hsl(0 0% 0% / 0.4), 0 4px 12px -2px hsl(0 0% 0% / 0.45);
+  --elevation-overlay:
+    0 6px 16px -4px hsl(0 0% 0% / 0.5), 0 16px 40px -12px hsl(0 0% 0% / 0.6);
+  --elevation-recessed:
+    inset 0 2px 5px hsl(0 0% 0% / 0.4), inset 0 -1px 0 hsl(43 20% 92% / 0.04);
+
+  /* Brand fill (submit/primary controls) — solid brand, no legacy gradient. */
+  --st-fancy-grad: linear-gradient(hsl(var(--brand)), hsl(var(--brand)));
+  --st-shadow: var(--elevation-overlay);
+
   /* Motion */
   --st-easing: cubic-bezier(0.405, 0, 0.025, 1);
   --st-transition: all 0.2s var(--st-easing);
 }
 
-.light {
-  --background: 37 79% 94%;
-  --foreground: 14 41% 10%;
-  --card: 37 79% 92%;
-  --card-foreground: 37 79% 20%;
-  --popover: 60 4.8% 95.9%;
-  --popover-foreground: 240 10% 3.9%;
-  --primary: 335 98.7% 31.2%;
-  --primary-foreground: 355.7 100% 97.3%;
-  --secondary: 30 97.5% 68.6%;
-  --secondary-foreground: 13 37% 0%;
-  --muted: 17.1 23.3% 88.2%;
-  --muted-foreground: 33 10% 34%;
-  --accent: 37 79% 94%;
-  --accent-foreground: 14 41% 10%;
-  --destructive: 0 91% 71%;
-  --destructive-foreground: 0 91% 100%;
-  --border: 37 20% 85%;
-  --input: 0 0% 100%;
-  --ring: 346.8 77.2% 49.8%;
+/* The tooltip lives inside arbitrary host pages whose root font-size is not
+   ours; pin its type scale and radius to px so a host `html { font-size }`
+   cannot shrink the tooltip. Extension pages (.sectors-ext) keep the rem scale. */
+#sectors-tooltip {
+  --text-3xs: 10px;
+  --text-2xs: 11px;
+  --text-body: 13px;
+  --text-h4: 14px;
+  --text-h3: 16px;
+  --text-h2: 18px;
+  --text-h1: 22px;
+  --radius: 6.4px;
+}
+
+.sectors-ext.light,
+#sectors-tooltip.light {
+  color-scheme: light;
+
+  /* Light theme = foundations `:root` + Sectors overrides. */
+  --background: 43 33% 96%;
+  --foreground: 30 14% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 30 14% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 30 14% 12%;
+  --primary: 133 11% 33%;
+  --primary-foreground: 0 0% 100%;
+  --primary-ink: var(--primary);
+  --secondary: 14 67% 72%;
+  --secondary-foreground: 14 69% 14%;
+  --secondary-ink: 14 67% 38%;
+  --muted: 40 20% 92%;
+  --muted-foreground: 30 8% 34%;
+  --subtle-foreground: 0 0% 52%;
+  --accent: 133 15% 90%;
+  --accent-foreground: 133 11% 33%;
+  --destructive: 0 50% 36%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 40 15% 80%;
+  --input: var(--border);
+  --ring: 133 11% 33%;
+
+  --success: 142 75% 29%;
+  --success-ink: 142 68% 28%;
+  --success-foreground: var(--tint-foreground);
+  --warn: 30 100% 43%;
+  --warn-ink: 22 85% 36%;
+  --warn-foreground: 30 25% 12%;
+  --info: 211 80% 43%;
+  --info-ink: 211 80% 40%;
+  --danger: 5 72% 43%;
+
+  --brand: 335 98.7% 31.2%;
+  --brand-ink: var(--spectral1);
+  --brand-foreground: var(--primary-foreground);
+  --logo-plate: 0 0% 100%;
+
+  --flow-pos: var(--spectral11);
+  --flow-neg: var(--spectral2);
+
+  --elevation-raised:
+    0 1px 2px -1px hsl(30 18% 12% / 0.1), 0 4px 12px -2px hsl(30 18% 12% / 0.1);
+  --elevation-overlay:
+    0 6px 16px -4px hsl(30 18% 12% / 0.14),
+    0 16px 40px -12px hsl(30 18% 12% / 0.22);
+  --elevation-recessed:
+    inset 0 1px 3px hsl(30 18% 12% / 0.07),
+    inset 0 0 0 1px hsl(30 18% 12% / 0.03);
 }

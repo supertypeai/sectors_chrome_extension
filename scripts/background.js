@@ -1,11 +1,13 @@
 // background.js — Service Worker
 // Handles Sectors API requests from the content script
+importScripts("api.js");
 
-const API_BASE = "https://api.sectors.app/v2";
-const CLIENT_SOURCE_HEADERS = { "X-Client-Source": "CHROME" };
+const { API_BASE, requestJson } = globalThis.SectorsApi;
 
-// URL to pull the active companies ticker list
 const TICKERS_LIST_URL = "https://raw.githubusercontent.com/supertypeai/sectors_chrome_extension/main/active_companies.json";
+const MAX_TICKERS = 20000;
+const MAX_TICKER_PAYLOAD = 5_000_000;
+const MAX_AI_QUERY = 500;
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === "install") {
@@ -18,39 +20,62 @@ chrome.runtime.onStartup.addListener(() => {
   syncTickers();
 });
 
-// Setup a weekly alarm to refresh the ticker list (10080 minutes = 7 days)
-chrome.alarms.create("syncTickersAlarm", { periodInMinutes: 10080 });
-chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === "syncTickersAlarm") {
-    syncTickers();
-  }
-});
-
+// Refresh the public whitelist on install/startup. The bundled copy is the
+// offline fallback; no alarm or background timer is used.
 async function syncTickers() {
   try {
-    const res = await fetch(TICKERS_LIST_URL, { headers: CLIENT_SOURCE_HEADERS });
-    if (!res.ok) return;
-    const data = await res.json();
-    
-    if (Array.isArray(data)) {
-      const idx = [];
-      const sgx = [];
-      data.forEach(sym => {
-        const upper = sym.toUpperCase();
-        if (upper.endsWith(".JK")) {
-          idx.push(upper.replace(".JK", ""));
-        } else if (upper.endsWith(".SI")) {
-          sgx.push(upper.replace(".SI", ""));
-        }
-      });
-      chrome.storage.local.set({ 
-        validIdxTickers: idx, 
-        validSgxTickers: sgx 
-      });
+    const res = await fetch(TICKERS_LIST_URL);
+    if (res.ok) {
+      const declaredSize = Number(res.headers.get("content-length") || 0);
+      if (declaredSize > MAX_TICKER_PAYLOAD) {
+        console.warn("Ticker sync skipped: payload too large", declaredSize);
+      } else if (storeTickers(await res.json())) {
+        return;
+      }
+    } else {
+      console.warn("Ticker sync failed:", res.status);
     }
   } catch (err) {
-    console.warn("Failed to sync tickers:", err);
+    console.warn("Ticker sync failed:", err);
   }
+  await loadBundledTickers();
+}
+
+async function loadBundledTickers() {
+  try {
+    const res = await fetch(chrome.runtime.getURL("active_companies.json"));
+    if (!res.ok) {
+      console.warn("Bundled ticker list load failed:", res.status);
+      return;
+    }
+    storeTickers(await res.json());
+  } catch (err) {
+    console.warn("Bundled ticker list load failed:", err);
+  }
+}
+
+function storeTickers(data) {
+  if (!Array.isArray(data)) return false;
+  const idx = [];
+  const sgx = [];
+  data.forEach(sym => {
+    if (idx.length + sgx.length >= MAX_TICKERS) return;
+    const upper = String(sym || "").toUpperCase().trim();
+    // Only accept canonical whitelist entries.
+    if (!/^[A-Z0-9]{1,10}\.(JK|SI)$/.test(upper)) return;
+    if (upper.endsWith(".JK")) {
+      idx.push(upper.slice(0, -3));
+    } else {
+      sgx.push(upper.slice(0, -3));
+    }
+  });
+  // A corrupt/partial remote list must not replace the bundled fallback.
+  if (idx.length + sgx.length < 10) return false;
+  chrome.storage.local.set({
+    validIdxTickers: idx,
+    validSgxTickers: sgx
+  });
+  return true;
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -64,7 +89,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
   if (request.type === "OPEN_OPTIONS") {
     chrome.runtime.openOptionsPage();
-    return true;
+    return false;
   }
 });
 
@@ -76,13 +101,20 @@ async function handleAiSearch(query, sendResponse, isSgx = false) {
       return;
     }
 
+    // Cap the query so a pasted wall of text cannot build an absurd URL.
+    const q = String(query || "").trim().slice(0, MAX_AI_QUERY);
+    if (!q) {
+      sendResponse({ error: "empty_query" });
+      return;
+    }
+
     // Route IDX → /v2/companies/, SGX → /v2/sgx/companies/ (natural-language company screener)
     const url = isSgx
-      ? `${API_BASE}/sgx/companies/?q=${encodeURIComponent(query)}`
-      : `${API_BASE}/companies/?q=${encodeURIComponent(query)}`;
+      ? `${API_BASE}/sgx/companies/?q=${encodeURIComponent(q)}`
+      : `${API_BASE}/companies/?q=${encodeURIComponent(q)}`;
 
     const data = await fetchJson(url, apiKey);
-    sendResponse({ results: data.results || [], pagination: data.pagination, llm_translation: data.llm_translation });
+    sendResponse({ results: data?.results || [], pagination: data?.pagination, llm_translation: data?.llm_translation });
   } catch (err) {
     sendResponse({ error: err.message });
   }
@@ -96,9 +128,15 @@ async function handleTickerFetch(symbol, sendResponse) {
       return;
     }
 
-    // Determine if it's Singapore or Indonesia stock
-    const isSgx = symbol.toLowerCase().endsWith(".si"); 
-    const cleanSymbol = symbol.replace(/\.(jk|ij|id|si)$/i, "").toUpperCase();
+    // Validate before building any API path; messages come from our content
+    // script, but keep the boundary strict anyway.
+    const rawSymbol = String(symbol || "").trim();
+    if (!/^[A-Za-z0-9]{1,10}(\.(jk|ij|id|si))?$/i.test(rawSymbol)) {
+      sendResponse({ error: "invalid_symbol" });
+      return;
+    }
+    const isSgx = /\.si$/i.test(rawSymbol);
+    const cleanSymbol = rawSymbol.replace(/\.(jk|ij|id|si)$/i, "").toUpperCase();
 
     const reportUrl = isSgx
       ? `${API_BASE}/sgx/company/report/${cleanSymbol}/`
@@ -129,56 +167,29 @@ async function handleTickerFetch(symbol, sendResponse) {
     }
 
     const report = reportRes.value;
-    const filingsRaw = filingsRes.status === "fulfilled" ? filingsRes.value : null;
+    const filings = filingsRes.status === "fulfilled" ? filingsRes.value : null;
 
-    // Normalise SGX filings (price_per_share → price) so downstream renderers
-    // can use a single f.price field, matching the IDX contract.
-    const filings = filingsRaw ? normaliseFilings(filingsRaw, isSgx) : null;
-
+    // SGX filings are normalised in the shared render layer so the tooltip and
+    // popup use the same `price` field.
     sendResponse({ report, filings, symbol: cleanSymbol, isSgx });
   } catch (err) {
     sendResponse({ error: err.message });
   }
 }
 
-// SGX filings expose the share price as `price_per_share`, while IDX uses `price`.
-// Mirror SGX's price field into `price` so renderers can stay exchange-agnostic.
-function normaliseFilings(filingsPayload, isSgx) {
-  if (!isSgx || !filingsPayload || !Array.isArray(filingsPayload.results)) {
-    return filingsPayload;
-  }
-  const normalised = filingsPayload.results.map((f) => {
-    if (f && f.price == null && f.price_per_share != null) {
-      return { ...f, price: f.price_per_share };
-    }
-    return f;
-  });
-  return { ...filingsPayload, results: normalised };
-}
 
 async function fetchJson(url, apiKey) {
-  const res = await fetch(url, {
-    headers: { Authorization: apiKey, ...CLIENT_SOURCE_HEADERS },
-  });
+  const { ok, status, data, text } = await requestJson(url, apiKey);
+  if (ok) return data;
 
-  if (!res.ok) {
-    let errorMsg = `HTTP ${res.status}`;
-    try {
-      const data = await res.json();
-      errorMsg = data.message || data.error || errorMsg;
-    } catch (e) {
-      // Fallback to simple message if JSON parsing fails
-    }
-
-    if (res.status === 403) {
-      throw new Error(`403: API key exhausted. Upgrade at sectors.app/api`);
-    }
-    if (res.status === 429) {
-      throw new Error(`429: Rate limit exceeded. Consider upgrading.`);
-    }
-    throw new Error(errorMsg);
+  const errorMsg = data?.message || data?.error || `HTTP ${status}${text ? ` — ${text.slice(0, 100)}` : ""}`;
+  if (status === 403) {
+    throw new Error(`403: API key exhausted. Upgrade at sectors.app/api`);
   }
-  return res.json();
+  if (status === 429) {
+    throw new Error(`429: Rate limit exceeded. Consider upgrading.`);
+  }
+  throw new Error(errorMsg);
 }
 
 function getApiKey() {

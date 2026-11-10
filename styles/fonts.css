@@ -1,0 +1,17 @@
+/* Self-hosted Ubuntu Sans (latin, variable). Avoids a third-party font request
+   from every page the content script runs on. */
+@font-face {
+  font-family: "Sectors Ubuntu Sans";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("../fonts/ubuntu-sans-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Sectors Ubuntu Sans Mono";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("../fonts/ubuntu-sans-mono-latin.woff2") format("woff2");
+}
